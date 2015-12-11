@@ -28,7 +28,7 @@ iconfianza.percentil.boot<-function(datos,q=0.50,nivel=0.95,ic=T,tipo.boot="norm
         else return(c(NA,inter.boot$t0[1],NA))
       }else{
         #return(rep(datos.boot$t0[1],3))
-        return(c(NA,inter.boot$t0[1],NA))
+        return(c(NA,datos.boot$t0[1],NA))
       }
     }
   } else return(rep(NA,3))
