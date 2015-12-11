@@ -345,7 +345,7 @@ memmodel<-function(i.data,
     moving.epidemics=temporadas.moviles.recortada,
     epi.intervals=epi.intervalos,
     typ.curve=curva.tipo,
-    typ.real.curve=curva.se.tipo
+    typ.real.curve=curva.se.tipo,
     n.max=n.max,
     n.seasons=anios,
     n.weeks=semanas,
