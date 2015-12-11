@@ -296,27 +296,25 @@ memmodel<-function(i.data,
 
   ## Dibujamos la curva epidemica tipo
 
-  # Importante: ?Quitamos los ceros?
-  iy<-(is.na(temporadas.moviles.recortada) | temporadas.moviles.recortada==0)
-  temporadas.moviles.recortada.no.ceros<-temporadas.moviles.recortada
-  temporadas.moviles.recortada.no.ceros[iy]<-NA
-  curva.tipo<-t(apply(temporadas.moviles.recortada.no.ceros,1,iconfianza,nivel=i.level.curve,tipo=i.type.curve,ic=T,tipo.boot=i.type.boot,iteraciones.boot=i.iter.boot,colas=2))
+  # Importante: NO quitamos los ceros! Queda al usuario hacer el cambio a NAs conforme su necesidad.
+  curva.tipo<-t(apply(temporadas.moviles.recortada,1,iconfianza,nivel=i.level.curve,tipo=i.type.curve,ic=T,tipo.boot=i.type.boot,iteraciones.boot=i.iter.boot,colas=2))
 
   ## Seleccionamos los periodos pre, epidemia, y post
 
   ## PRE y POST-TEMPORADA GRIPAL
 
-  ## Como no se registra mas q de la semana 40 a la 20, tenemos q muchas de las semanas tienen tasa 0, eliminamos esas semanas,
-  ## ya q podrian llevar a una infraestimacion de la tasa base fuera de temporada
+  ## En los casos en que no se registra mas q de la semana 40 a la 20, por ej., puede que esas semanas tengan tasa 0.
+  ## Queda para el usuario cambiarlas a NA en sus datos antes de aplicar las funciones del paquete MEM,
+  ## ya q podrian llevar a una infraestimacion de la tasa base fuera de temporada.
 
   pre.post.datos<-rbind(as.vector(as.matrix(extraer.datos.pre.epi(optimo))),as.vector(as.matrix(extraer.datos.post.epi(optimo))))
   epi.datos<-as.vector(as.matrix(apply(datos,2,max.n.valores,n.max=n.max)))
   # IC de la linea basica de pre y post temporada
 
   # por defecto estaba la geometrica
-  pre.d<-pre.post.datos[1,!(is.na(pre.post.datos[1,]) | pre.post.datos[1,]==0)]
+  pre.d<-pre.post.datos[1,!(is.na(pre.post.datos[1,]))]
   pre.i<-iconfianza(pre.d,nivel=i.level.threshold,tipo=i.type.threshold,ic=T,tipo.boot=i.type.boot,iteraciones.boot=i.iter.boot,colas=i.tails.threshold)
-  post.d<-pre.post.datos[2,!(is.na(pre.post.datos[2,]) | pre.post.datos[2,]==0)]
+  post.d<-pre.post.datos[2,!(is.na(pre.post.datos[2,]))]
   post.i<-iconfianza(post.d,nivel=i.level.threshold,tipo=i.type.threshold,ic=T,tipo.boot=i.type.boot,iteraciones.boot=i.iter.boot,colas=i.tails.threshold)
   pre.post.intervalos<-rbind(pre.i,post.i)
   epi.intervalos<-numeric()
