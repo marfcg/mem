@@ -302,6 +302,9 @@ memmodel<-function(i.data,
   temporadas.moviles.recortada.no.ceros[iy]<-NA
   curva.tipo<-t(apply(temporadas.moviles.recortada.no.ceros,1,iconfianza,nivel=i.level.curve,tipo=i.type.curve,ic=T,tipo.boot=i.type.boot,iteraciones.boot=i.iter.boot,colas=2))
 
+  # Movemos los valores < 0 hacia 0, para que tenga sentido desde el punto de vista poblacional
+  curva.tipo[curva.tipo < 0] <- 0
+
   ## Seleccionamos los periodos pre, epidemia, y post
 
   ## PRE y POST-TEMPORADA GRIPAL
