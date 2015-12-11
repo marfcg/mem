@@ -298,6 +298,7 @@ memmodel<-function(i.data,
 
   # Importante: NO quitamos los ceros! Queda al usuario hacer el cambio a NAs conforme su necesidad.
   curva.tipo<-t(apply(temporadas.moviles.recortada,1,iconfianza,nivel=i.level.curve,tipo=i.type.curve,ic=T,tipo.boot=i.type.boot,iteraciones.boot=i.iter.boot,colas=2))
+  curva.se.tipo<-t(apply(datos,1,iconfianza,nivel=i.level.curve,tipo=i.type.curve,ic=T,tipo.boot=i.type.boot,iteraciones.boot=i.iter.boot,colas=2))
 
   ## Seleccionamos los periodos pre, epidemia, y post
 
@@ -344,6 +345,7 @@ memmodel<-function(i.data,
     moving.epidemics=temporadas.moviles.recortada,
     epi.intervals=epi.intervalos,
     typ.curve=curva.tipo,
+    typ.real.curve=curva.se.tipo
     n.max=n.max,
     n.seasons=anios,
     n.weeks=semanas,
