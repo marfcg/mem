@@ -321,16 +321,132 @@ memmodel<-function(i.data,
   #	lineas.basicas[i,]<-pre.post.intervalos[2,1:3]
   #}
 
+  ## Curva tipica con base en el umbral pre-epidémico
+  ## Sacar la semana típica de início, fim y duración con base en los umbrales pre y post epidemico
+
+  inicio.umbral<- apply(datos>pre.i[3], 2, primer.verdadero)
+  fin.umbral <- c()
+  datos.suav <- apply(datos, 2, suavizado)
+  for (i in seq(1,length(inicio.umbral))){
+    if (!is.na(inicio.umbral[i])){
+      inicio.umbral.i <- inicio.umbral[i] + 1
+      test.data <- (datos[inicio.umbral.i:dim(datos)[1], i] < post.i[3] &
+                      diff(datos.suav[(inicio.umbral.i-1):dim(datos)[1], i]) < 0)
+      fin.umbral <- c(fin.umbral, primer.verdadero(test.data)+inicio.umbral.i-1)
+    } else {
+      fin.umbral <- c(fin.umbral, NA)
+    }
+  }
+
+  duracion.umbral <- fin.umbral - inicio.umbral
+  inicio.umbral.i <- iconfianza(inicio.umbral,nivel=i.level.other,tipo=i.type.other,
+                                ic=T,tipo.boot=i.type.boot,iteraciones.boot=i.iter.boot,
+                                colas=2)
+  inicio.umbral.i <- rbind(inicio.umbral.i,
+                           c(floor(inicio.umbral.i[1]), round(inicio.umbral.i[2]),
+                             ceiling(inicio.umbral.i[3])))
+  inicio.umbral.i <- rbind(inicio.umbral.i,
+                           semana.absoluta(inicio.umbral.i[2,], semana.inicio))
+  inicio.umbral.i <-inicio.umbral.i[c(2,3,1),]
+  inicio.umbral.medio<-inicio.umbral.i[1,2]
+
+
+  fin.umbral.i <- iconfianza(fin.umbral,nivel=i.level.other,tipo=i.type.other,
+                             ic=T,tipo.boot=i.type.boot,iteraciones.boot=i.iter.boot,
+                             colas=2)
+  duracion.umbral.i <- iconfianza(duracion.umbral,nivel=i.level.other,tipo=i.type.other,
+                             ic=T,tipo.boot=i.type.boot,iteraciones.boot=i.iter.boot,
+                             colas=2)
+  duracion.umbral.i <- rbind(duracion.umbral.i,
+                           c(floor(duracion.umbral.i[1]), round(duracion.umbral.i[2]),
+                             ceiling(duracion.umbral.i[3])))
+  duracion.umbral.i <- duracion.umbral.i[c(2,1),]
+  duracion.umbral.media <- duracion.umbral.i[1,2]
+
+  longitud.esquema.umbral<-semanas+max.fix.na(inicio.umbral)-min.fix.na(inicio.umbral)
+  inicio.epidemia.esquema.umbral<-max.fix.na(inicio.umbral)
+  fin.epidemia.esquema.umbral<-max.fix.na(fin.umbral)
+
+  esquema.umbral.temporadas<-array(dim=c(longitud.esquema.umbral,anios+2,3))
+
+
+  for (j in 1:anios){
+    if (is.na(inicio.umbral[j])){
+      esquema.umbral.temporadas[,j,] <- NA
+    } else {
+      diferencia <- inicio.epidemia.esquema.umbral - inicio.umbral[j]
+      esquema.umbral.temporadas[seq(1,semanas)+diferencia,j,1] <- seq(1,semanas)
+      esquema.umbral.temporadas[seq(1,semanas)+diferencia,j,2] <- semana.absoluta(seq(1,semanas), semana.inicio)
+      esquema.umbral.temporadas[seq(1,semanas)+diferencia,j,3] <- i.data[,j]
+    }
+  }
+
+  inicio.umbral.medio <- inicio.umbral.i[1,2]
+  diferencia <- inicio.epidemia.esquema.umbral - inicio.umbral.medio
+  for (i in 1:semanas){
+    if ((i+diferencia)>=1 & (i+diferencia)<=longitud.esquema.umbral){
+      esquema.umbral.temporadas[i+diferencia,anios+1,1] <- i
+      esquema.umbral.temporadas[i+diferencia,anios+1,2] <- semana.absoluta(i,semana.inicio)
+    }
+  }
+
+  ## Temporadas moviles
+
+  temporadas.moviles.umbral <- esquema.umbral.temporadas[,c(1:anios),3]
+
+  ## Limites de la temporada
+
+  limites.temporada<-c(inicio.umbral.medio, inicio.umbral.medio+duracion.umbral.media-1)
+  limites.temporada<-rbind(limites.temporada,
+                           c(semana.absoluta(inicio.umbral.medio,semana.inicio),
+                             semana.absoluta(inicio.umbral.medio+duracion.umbral.media-1,semana.inicio)))
+
+  # Limites relativos
+
+  limites.umbral.esquema<-c(inicio.epidemia.esquema.umbral,
+                            inicio.epidemia.esquema.umbral+duracion.umbral.media-1)
+
+  ## En ttotal reordenamos la gripe para q todas las temporadas tengan su estinicio en la misma semana que el promedio, y quitamos informacion
+  ## por delante y por detras de esquema.temporada[,,3] para que queden 35 semanas (las que hay).
+
+  temporadas.moviles.umbral.recortada<-array(dim=c(semanas,anios))
+
+  ## Temporada gripal comienza "estinicio" y termina en "estinicio+temporada-1"
+  diferencia<-inicio.umbral.medio-limites.umbral.esquema[1]
+  for (j in 1:anios){
+    for (i in 1:semanas){
+      if ((i-diferencia)>=1 & (i-diferencia)<=longitud.esquema.umbral){
+        temporadas.moviles.umbral.recortada[i,j]<-temporadas.moviles.umbral[i-diferencia,j]
+      }else{
+        temporadas.moviles.umbral.recortada[i,j]<-NA
+      }
+    }
+  }
+
+  ## Dibujamos la curva epidemica tipo
+
+  # Importante: NO quitamos los ceros! Queda al usuario hacer el cambio a NAs conforme su necesidad.
+  curva.tipo.umbral<-t(apply(temporadas.moviles.umbral.recortada,1,iconfianza,nivel=i.level.curve,
+                      tipo=i.type.curve,ic=T,tipo.boot=i.type.boot,
+                      iteraciones.boot=i.iter.boot,colas=2))
+
+  ############################
+
   memmodel.output<-list(pre.post.intervals=pre.post.intervalos,
     ci.length=ic.duracion,
+    ci.length.threshold=duracion.umbral.i,
     ci.percent=ic.porcentaje,
     ci.start=ic.inicio,
+    ci.start.threshold=inicio.umbral.i,
     mean.length=duracion.media,
+    mean.length.threshold=duracion.umbral.media,
     mean.start=inicio.medio,
+    mean.start.threshold=inicio.umbral.medio,
     moving.epidemics=temporadas.moviles.recortada,
     epi.intervals=epi.intervalos,
     typ.curve=curva.tipo,
     typ.real.curve=curva.se.tipo,
+    typ.threshold.curve=curva.tipo.umbral,
     n.max=n.max,
     n.seasons=anios,
     n.weeks=semanas,
