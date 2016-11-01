@@ -98,6 +98,9 @@
 #'
 #' @export
 #' @importFrom stats loess qnorm quantile runif var
+#' @importFrom grDevices colorRampPalette colorRamp dev.off rgb tiff
+#' @importFrom RColorBrewer brewer.pal
+#' @importFrom graphics abline axis legend matplot mtext par points text lines
 memmodel<-function(i.data,
                     i.seasons=10,
                     i.type.threshold=5,
@@ -118,11 +121,13 @@ memmodel<-function(i.data,
 
   if (is.null(dim(i.data))) stop('Incorrect number of dimensions, input must be a data.frame.') else if (!(ncol(i.data)>1)) stop('Incorrect number of dimensions, at least two seasons of data required.')
 
-  if (is.matrix(i.data)) i.data<-as.data.frame(i.data)
+  datos<-i.data[apply(i.data,2,function(x) sum(x,na.rm=T)>0)]
 
-  if (i.seasons>0) i.data<-i.data[(max((dim(i.data)[2])-i.seasons+1,1)):(dim(i.data)[2])]
+  if (is.matrix(datos)) datos<-as.data.frame(datos)
 
-  datos<-apply(i.data,2,fill.missing)
+  if (!is.na(i.seasons)) if (i.seasons>0) datos<-datos[(max((dim(datos)[2])-i.seasons+1,1)):(dim(datos)[2])]
+
+  datos<-as.data.frame(apply(datos,2,fill.missing))
 
   semanas<-dim(datos)[1]
   anios<-dim(datos)[2]
@@ -156,7 +161,7 @@ memmodel<-function(i.data,
 
   # Datos de la gripe en la temporada REAL y en la temporada MEDIA, esta ultima sirve para unir las temporadas.
 
-  semana.inicio<-as.integer(rownames(i.data)[1])
+  semana.inicio<-as.integer(rownames(datos)[1])
   gripe<-array(dim=c(7,anios,2))
 
   datos.duracion.media<-extraer.datos.curva.map(optimo,duracion.media)
@@ -229,7 +234,7 @@ memmodel<-function(i.data,
       diferencia<-inicio.epidemia.esquema-gripe[1,j,2]
       esquema.temporadas[i+diferencia,j,1]<-i
       esquema.temporadas[i+diferencia,j,2]<-semana.absoluta(i,semana.inicio)
-      esquema.temporadas[i+diferencia,j,3]<-i.data[i,j]
+      esquema.temporadas[i+diferencia,j,3]<-datos[i,j]
     }
   }
 
@@ -281,33 +286,48 @@ memmodel<-function(i.data,
 
   ## Dibujamos la curva epidemica tipo
 
-  # Importante: NO quitamos los ceros! Queda al usuario hacer el cambio a NAs conforme su necesidad.
-  curva.tipo<-t(apply(temporadas.moviles.recortada,1,iconfianza,nivel=i.level.curve,tipo=i.type.curve,ic=T,tipo.boot=i.type.boot,iteraciones.boot=i.iter.boot,colas=2))
+  # Importante: ?Quitamos los ceros?
+  # iy<-(is.na(temporadas.moviles.recortada) | temporadas.moviles.recortada==0)
+  iy<-is.na(temporadas.moviles.recortada)
+  temporadas.moviles.recortada.no.ceros<-temporadas.moviles.recortada
+  temporadas.moviles.recortada.no.ceros[iy]<-NA
+  curva.tipo<-t(apply(temporadas.moviles.recortada.no.ceros,1,iconfianza,nivel=i.level.curve,tipo=i.type.curve,ic=T,tipo.boot=i.type.boot,iteraciones.boot=i.iter.boot,colas=2))
   curva.se.tipo<-t(apply(datos,1,iconfianza,nivel=i.level.curve,tipo=i.type.curve,ic=T,tipo.boot=i.type.boot,iteraciones.boot=i.iter.boot,colas=2))
 
   ## Seleccionamos los periodos pre, epidemia, y post
 
   ## PRE y POST-TEMPORADA GRIPAL
 
-  ## En los casos en que no se registra mas q de la semana 40 a la 20, por ej., puede que esas semanas tengan tasa 0.
-  ## Queda para el usuario cambiarlas a NA en sus datos antes de aplicar las funciones del paquete MEM,
-  ## ya q podrian llevar a una infraestimacion de la tasa base fuera de temporada.
+  ## Como no se registra mas q de la semana 40 a la 20, tenemos q muchas de las semanas tienen tasa 0, eliminamos esas semanas,
+  ## ya q podrian llevar a una infraestimacion de la tasa base fuera de temporada
 
-  pre.post.datos<-rbind(as.vector(as.matrix(extraer.datos.pre.epi(optimo))),as.vector(as.matrix(extraer.datos.post.epi(optimo))))
-  epi.datos<-as.vector(as.matrix(apply(datos,2,max.n.valores,n.max=n.max)))
+  pre.datos<-as.vector(as.matrix(extraer.datos.pre.epi(optimo)))
+  post.datos<-as.vector(as.matrix(extraer.datos.post.epi(optimo)))
+  epi.datos<-as.vector(as.matrix(extraer.datos.epi(optimo)))
+  epi.datos.2<-as.vector(as.matrix(apply(datos,2,max.n.valores,n.max=n.max)))
+
+  pre.post.datos<-rbind(pre.datos,post.datos)
+
   # IC de la linea basica de pre y post temporada
 
   # por defecto estaba la geometrica
-  pre.d<-pre.post.datos[1,!(is.na(pre.post.datos[1,]))]
+  # pre.d<-pre.datos[!(is.na(pre.datos) | pre.datos==0)]
+  # post.d<-post.datos[!(is.na(post.datos) | post.datos==0)]
+  # epi.d<-epi.datos[!(is.na(epi.datos) | epi.datos==0)]
+  # epi.d.2<-epi.datos.2[!(is.na(epi.datos.2) | epi.datos.2==0)]
+  pre.d<-pre.datos[!is.na(pre.datos)]
+  post.d<-post.datos[!is.na(post.datos)]
+  epi.d<-epi.datos[!is.na(epi.datos)]
+  epi.d.2<-epi.datos.2[!is.na(epi.datos.2)]
+
   pre.i<-iconfianza(pre.d,nivel=i.level.threshold,tipo=i.type.threshold,ic=T,tipo.boot=i.type.boot,iteraciones.boot=i.iter.boot,colas=i.tails.threshold)
-  post.d<-pre.post.datos[2,!(is.na(pre.post.datos[2,]))]
   post.i<-iconfianza(post.d,nivel=i.level.threshold,tipo=i.type.threshold,ic=T,tipo.boot=i.type.boot,iteraciones.boot=i.iter.boot,colas=i.tails.threshold)
-  pre.post.intervalos<-rbind(pre.i,post.i)
   epi.intervalos<-numeric()
-  #niveles<-c(0.50,0.90,0.95)
-  for (niv in i.level.intensity){
-    epi.intervalos<-rbind(epi.intervalos,c(niv,iconfianza(epi.datos,nivel=niv,tipo=i.type.intensity,ic=T,colas=i.tails.intensity)))
-  }
+  for (niv in i.level.intensity) epi.intervalos<-rbind(epi.intervalos,c(niv,iconfianza(epi.d,nivel=niv,tipo=i.type.intensity,ic=T,colas=i.tails.intensity)))
+  epi.intervalos.2<-numeric()
+  for (niv in i.level.intensity) epi.intervalos.2<-rbind(epi.intervalos.2,c(niv,iconfianza(epi.d.2,nivel=niv,tipo=i.type.intensity,ic=T,colas=i.tails.intensity)))
+
+  pre.post.intervalos<-rbind(pre.i,post.i)
 
   ## Ademas, añadimos las estimaciones de las lineas basicas antes y despues
 
@@ -444,6 +464,7 @@ memmodel<-function(i.data,
     mean.start.threshold=inicio.umbral.medio,
     moving.epidemics=temporadas.moviles.recortada,
     epi.intervals=epi.intervalos,
+    epi.intervals.full=epi.intervalos.2,
     typ.curve=curva.tipo,
     typ.real.curve=curva.se.tipo,
     typ.threshold.curve=curva.tipo.umbral,
@@ -453,6 +474,7 @@ memmodel<-function(i.data,
     data=datos,
     start.week=semana.inicio,
     epi.data=epi.datos,
+    epi.data.nona=epi.d,
     optimum=optimo,
     real.length.data=datos.duracion.real,
     seasons.data=gripe,
@@ -460,6 +482,8 @@ memmodel<-function(i.data,
     season.scheme=esquema.temporadas,
     seasons.moving=temporadas.moviles,
     pre.post.data=pre.post.datos,
+    pre.data.nona=pre.d,
+    post.data.nona=post.d,
     epidemic.thresholds=as.numeric(pre.post.intervalos[,3]),
     intensity.thresholds=as.numeric(epi.intervalos[,4]),
     param.data=i.data,
@@ -545,61 +569,143 @@ summary.mem<-function(object, ...){
 
 #' @export
 plot.mem<-function(x,...){
-  opar<-par(mfrow=c(1,2))
+  #opar<-par(mfrow=c(1,2))
+  opar<-par(mfrow=c(1,2),mar=c(4,3,1,2)+0.1,mgp=c(3,0.5,0),xpd=T)
+
   # Graph 1
-  semanas<-dim(x$param.data)[1]
-  anios<-dim(x$param.data)[2]
+  semanas<-dim(x$data)[1]
+  anios<-dim(x$data)[2]
   datos.graf<-x$moving.epidemics
-  colnames(datos.graf)<-names(x$param.data)
+  colnames(datos.graf)<-names(x$data)
   #lab.graf<-(1:semanas)+x$mean.start[2]-x$mean.start[1]
   lab.graf<-(1:semanas)+x$ci.start[2,2]-x$ci.start[1,2]
   lab.graf[lab.graf>52]<-(lab.graf-52)[lab.graf>52]
   lab.graf[lab.graf<1]<-(lab.graf+52)[lab.graf<1]
   tipos<-rep(1,anios)
   anchos<-rep(2,anios)
-  colores<-c(rgb(runif(anios-1),runif(anios-1),runif(anios-1)),"#FF0000")
-  limite.superior<-c(1.05*max.fix.na(datos.graf))
-  matplot(1:semanas,datos.graf,type="l",sub=paste("Weekly incidence rates of the seasons matching their relative position in the model."),lty=tipos,lwd=anchos,col=colores,xlim=c(1,semanas),xlab="Week",ylab="Rate",font.axis=1,font.lab=1,font.main=2,font.sub=1, ylim=c(0,limite.superior),xaxt="n")
-  axis(1,at=1:semanas,labels=as.character(lab.graf))
+  pal <- colorRampPalette(brewer.pal(4,"Spectral"))
+  colores<-pal(anios)
+  #colores<-c(rgb(runif(anios-1),runif(anios-1),runif(anios-1)),"#FF0000")
+  # limite.superior<-c(1.05*max.fix.na(datos.graf))
+  otick<-optimal.tickmarks(0,max.fix.na(datos.graf),10)
+  range.y<-c(otick$range[1],otick$range[2]+otick$by/2)
+  matplot(1:semanas,
+          datos.graf,
+          type="l",
+          sub=paste("Weekly incidence rates of the seasons matching their relative position in the model."),
+          lty=tipos,
+          lwd=anchos,
+          col=colores,
+          xlim=c(1,semanas),
+          #xlab="Week",
+          #ylab="Rate",
+          xlab="",
+          ylab="",
+          axes=F,
+          #font.axis=1,
+          #font.lab=1,
+          font.main=2,
+          font.sub=1,
+          ylim=range.y)
+  # Ejes
+  axis(1,at=seq(1,semanas,1),labels=F,cex.axis=0.7,col.axis="#404040",col="#C0C0C0")
+  axis(1,at=seq(1,semanas,2),tick=F,
+       labels=as.character(lab.graf)[seq(1,semanas,2)],cex.axis=0.7,col.axis="#404040",col="#C0C0C0")
+  axis(1,at=seq(2,semanas,2),tick=F,
+       labels=as.character(lab.graf)[seq(2,semanas,2)],cex.axis=0.7,line=0.60,col.axis="#404040",col="#C0C0C0")
+  mtext(1,text="Week",line=2,cex=0.8,col="#000040")
+  axis(2,at=otick$tickmarks,lwd=1,cex.axis=0.6,col.axis="#404040",col="#C0C0C0")
+  mtext(2,text="Weekly rate",line=1.3,cex=0.8,col="#000040")
+  mtext(4,text=paste("mem R library - Jos",rawToChar(as.raw(233))," E. Lozano - https://github.com/lozalojo/mem",sep=""),
+        line=0.75,cex=0.6,col="#404040")
   i.temporada<-x$ci.start[1,2]
   f.temporada<-x$ci.start[1,2]+x$mean.length-1
-  abline(v=c(i.temporada-0.5,f.temporada+0.5),col=c("#00C000","#FFB401"),lty=c(2,2))
-  ya<-limite.superior*0.975
-  if ((i.temporada-1)<=(semanas-f.temporada)){
-    xa<-semanas*0.99
-    legend(x="topright",xjust=1,legend=names(x$param.data),lty=tipos,lwd=anchos,col=colores,cex=0.75)
-  }else{
-    xa<-semanas*0.01
-    legend(x="topleft",legend=names(x$param.data),lty=tipos,lwd=anchos,col=colores,cex=0.75)
-  }
+  lines(x=rep(i.temporada-0.5,2),y=range.y,col="#FF0000",lty=2,lwd=2)
+  lines(x=rep(f.temporada+0.5,2),y=range.y,col="#40FF40",lty=2,lwd=2)
+  lines(x=c(1,semanas),y=rep(x$epidemic.thresholds[1],2),col="#8c6bb1",lty=2,lwd=2)
+  # abline(v=c(i.temporada-0.5,f.temporada+0.5),col=c("#00C000","#FFB401"),lty=c(2,2))
+  #ya<-range.y[2]*0.975
+  ya<-otick$range[2]
+  if ((i.temporada-1)<=(semanas-f.temporada)) xa<-f.temporada+1 else xa<-1
+  legend(x=xa,y=ya,inset=c(0,0),xjust=0,seg.len=1,
+           legend=names(x$data),
+           bty="n",
+           lty=tipos,
+           lwd=anchos,
+           col=colores,
+           cex=0.75,
+         x.intersp=0.5,
+         y.intersp=0.6,
+           text.col="#000000",
+           ncol=1)
+
   # Graph 2
-  lineas.basicas<-rbind(matrix(rep(x$pre.post.intervals[1,1:3],i.temporada-1),ncol=3,byrow=T),
-                        matrix(rep(NA,3*(f.temporada-i.temporada+1)),ncol=3),
-                        matrix(rep(x$pre.post.intervals[2,1:3],semanas-f.temporada),ncol=3,byrow=T))
-  n.niveles<-dim(x$epi.intervals)[1]
-  limites.niveles<-as.vector(x$epi.intervals[1:n.niveles,4])
-  nombres.niveles<-as.character(x$epi.intervals[1:n.niveles,1])
-  limites.niveles[limites.niveles<0]<-0
-  limites.niveles.mas<-array(dim=c(semanas,n.niveles))
-  for (i in i.temporada:f.temporada) limites.niveles.mas[i,]<-limites.niveles
-  datos.graf<-as.data.frame(cbind(lineas.basicas[,3],x$typ.curve[,2],limites.niveles.mas))
-  etiquetas<-paste(round(limites.niveles,2)," (",as.numeric(nombres.niveles)*100,"%) ",sep="")
-  names(datos.graf)<-c("Threshold",etiquetas)
-  tipos<-c(1,2,rep(2,times=n.niveles))
-  anchos<-c(3,2,rep(2,times=n.niveles))
-  colores<-c("#FF0000","#800080","#C0C0FF","#8080FF","#4040FF","#0000C0","#000080")
-  limite.superior<-c(0,1.1*max.fix.na(datos.graf))
-  matplot(1:semanas,datos.graf,type="l",sub=paste("MEM Threshold"),lty=tipos,lwd=anchos,
-          col=colores,xlim=c(1,semanas),xlab="Week",ylab="Rate",font.axis=1,font.lab=1,font.main=2,
-          font.sub=1, ylim=limite.superior,xaxt="n")
-  axis(1,at=1:semanas,labels=as.character(lab.graf))
-  xa<-c(i.temporada/2,1+rep(f.temporada,n.niveles))
-  ya<-c(lineas.basicas[1,3],limites.niveles)
-  texto<-c(paste("Threshold: ",round(lineas.basicas[1,3],2),sep=""),etiquetas)
-  posiciones<-c(3,rep(4,n.niveles))
-  tamanios<-c(0.75,rep(0.75,n.niveles))
-  colores<-c("#FF0000",colores[3:(3+n.niveles-1)])
-  text(xa,ya,texto,pos=posiciones,col=colores,cex=tamanios)
+  # lineas.basicas<-rbind(matrix(rep(x$pre.post.intervals[1,1:3],i.temporada-1),ncol=3,byrow=T),
+  #                       matrix(rep(NA,3*(f.temporada-i.temporada+1)),ncol=3),
+  #                       matrix(rep(x$pre.post.intervals[2,1:3],semanas-f.temporada),ncol=3,byrow=T))
+  # n.niveles<-dim(x$epi.intervals)[1]
+  # limites.niveles<-as.vector(x$epi.intervals[1:n.niveles,4])
+  # nombres.niveles<-as.character(x$epi.intervals[1:n.niveles,1])
+  # limites.niveles[limites.niveles<0]<-0
+  # limites.niveles.mas<-array(dim=c(semanas,n.niveles))
+  # for (i in i.temporada:f.temporada) limites.niveles.mas[i,]<-limites.niveles
+  # datos.graf<-as.data.frame(cbind(lineas.basicas[,3],x$typ.curve[,2],limites.niveles.mas))
+  # etiquetas<-paste(round(limites.niveles,2)," (",as.numeric(nombres.niveles)*100,"%) ",sep="")
+  # names(datos.graf)<-c("Threshold",etiquetas)
+  # tipos<-c(1,2,rep(2,times=n.niveles))
+  # anchos<-c(3,2,rep(2,times=n.niveles))
+  # colores<-c("#FF0000","#800080","#C0C0FF","#8080FF","#4040FF","#0000C0","#000080")
+  # matplot(1:semanas,
+  #         datos.graf,
+  #         type="l",
+  #         sub=paste("MEM Threshold"),
+  #         lty=tipos,
+  #         lwd=anchos,
+  #         col=colores,
+  #         xlim=c(1,semanas),
+  #         xlab="",
+  #         ylab="",
+  #         axes=F,
+  #         font.main=2,
+  #         font.sub=1,
+  #         ylim=range.y)
+  # axis(1,at=seq(1,semanas,1),labels=F,cex.axis=0.7,col.axis="#404040",col="#C0C0C0")
+  # axis(1,at=seq(1,semanas,2),tick=F,
+  #      labels=as.character(lab.graf)[seq(1,semanas,2)],cex.axis=0.7,col.axis="#404040",col="#C0C0C0")
+  # axis(1,at=seq(2,semanas,2),tick=F,
+  #      labels=as.character(lab.graf)[seq(2,semanas,2)],cex.axis=0.7,line=0.60,col.axis="#404040",col="#C0C0C0")
+  # mtext(1,text="Week",line=2,cex=0.8,col="#000040")
+  # axis(2,at=otick$tickmarks,lwd=1,cex.axis=0.6,col.axis="#404040",col="#C0C0C0")
+  # mtext(2,text="Weekly rate",line=1.3,cex=0.8,col="#000040")
+  # mtext(4,text=paste("mem R library - Jos",rawToChar(as.raw(233))," E. Lozano - https://github.com/lozalojo/mem",sep=""),
+  #       line=0.75,cex=0.6,col="#404040")
+  # xa<-c(i.temporada/2,1+rep(f.temporada,n.niveles))
+  # ya<-c(lineas.basicas[1,3],limites.niveles)
+  # texto<-c(paste("Threshold: ",round(lineas.basicas[1,3],2),sep=""),etiquetas)
+  # posiciones<-c(3,rep(4,n.niveles))
+  # tamanios<-c(0.75,rep(0.75,n.niveles))
+  # colores<-c("#FF0000",colores[3:(3+n.niveles-1)])
+  # text(xa,ya,texto,pos=posiciones,col=colores,cex=tamanios)
+
+
+  temp1<-memsurveillance(i.current=data.frame(rates=x$typ.curve[,2], row.names = rownames(x$data)),
+                         i.epidemic.thresholds = x$epidemic.thresholds,
+                         i.intensity.thresholds = x$intensity.thresholds,
+                         i.mean.length = x$mean.length,
+                         i.force.length = T,
+                         i.graph.file = F,
+                         i.week.report = NA,
+                         i.equal = F,
+                         i.pos.epidemic = T,
+                         i.no.epidemic = F,
+                         i.no.intensity = F,
+                         i.epidemic.start = x$ci.start[2,2],
+                         i.range.x = as.numeric(c(rownames(x$data)[1],rownames(x$data)[semanas])),
+                         i.range.x.53 = F,
+                         i.range.y = NA,
+                         i.no.labels = F,
+                         i.start.end.marks = T)
+
   par(opar)
 }
 

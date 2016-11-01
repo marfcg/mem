@@ -30,6 +30,7 @@
 #' @param i.output output directory for graphs.
 #' @param i.graph whether the graphs must be written or not.
 #' @param i.prefix prefix used for naming graphs.
+#' @param i.min.seasons minimum number of seasons to perform goodness, default=6.
 #'
 #' @return
 #' \code{memgoodness} returns a list.
@@ -81,17 +82,18 @@ memgoodness<-function(i.data,
                       i.weeks.above=1,
                       i.output=".",
                       i.graph=F,
-                      i.prefix=""){
+                      i.prefix="",
+                      i.min.seasons=6){
 
   anios<-dim(i.data)[2]
   semanas<-dim(i.data)[1]
-  #validacion<-array(dim=c(8,anios),dimnames=c("year","indicator"))
-  validacion<-array(dim=c(8,anios))
+  #validacion<-array(dim=c(12,anios),dimnames=c("year","indicator"))
+  validacion<-array(dim=c(13,anios))
   colnames(validacion)<-names(i.data)
 
   if (!(i.goodness.method=="sequential")){
     # Metodo 2: cruzada
-    if (anios>5){
+    if (anios>=i.min.seasons){
       for (i in 1:anios){
         indices.2<-(1:anios)-i
         indices.1<-abs(indices.2)
@@ -133,7 +135,7 @@ memgoodness<-function(i.data,
     }
   }else{
     # Metodo 1: secuencial
-    if (anios>5){
+    if (anios>=i.min.seasons){
       for (i in 6:anios){
         indices.modelo<-max(1,i-10):(i-1)
         indices.actual<-i
@@ -173,9 +175,21 @@ memgoodness<-function(i.data,
   }
 
   resultado<-apply(validacion,1,sum,na.rm=T)
+  # sensibilidad
   resultado[7]<-resultado[3]/(resultado[3]+resultado[6])
+  # especificidad
   resultado[8]<-resultado[5]/(resultado[5]+resultado[4])
-
+  # vpp
+  resultado[9]<-resultado[3]/(resultado[3]+resultado[4])
+  # vpn
+  resultado[10]<-resultado[5]/(resultado[5]+resultado[6])
+  # positive likehood ratio
+  resultado[11]<-resultado[7]/(1-resultado[8])
+  # negative likehood ratio
+  resultado[12]<-(1-resultado[7])/resultado[8]
+  # negative likehood ratio
+  resultado[13]<-(resultado[3]+resultado[5])/(resultado[3]+resultado[4]+resultado[5]+resultado[6])
+  
   memgoodness.output<-list(validity.data=validacion,
                           results=resultado,
                           param.data=i.data,

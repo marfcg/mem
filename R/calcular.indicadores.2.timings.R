@@ -57,7 +57,7 @@ calcular.indicadores.2.timings<-function(i.current,
     # calculo el rango y para que tenga 10 marcas o este cerca
 
     maximo.y<-max.fix.na(dgraf)
-    posicion.ticks<-calcular.tickmarks(maximo.y)$posicion.ticks
+    posicion.ticks<-optimal.tickmarks(0,maximo.y,10)$by
     range.y<-c(-1.5*posicion.ticks,ceiling(maximo.y/posicion.ticks)*posicion.ticks)
     range.y.seq<-seq(0,ceiling(maximo.y/posicion.ticks)*posicion.ticks,posicion.ticks)
 
@@ -105,7 +105,7 @@ calcular.indicadores.2.timings<-function(i.current,
       axis(1,at=seq(2,semanas,2),tick=F,mgp=c(3, 0.5, 0),
            labels=nombre.semana[seq(2,semanas,2)],cex.axis=0.6,line=0.60,col.axis="#404040",col="#C0C0C0")
       mtext(1,text="Week",line=2.5,cex=0.8,col="#000040")
-      mtext(4,text="mem R library - Jos? E. Lozano - https://cran.r-project.org/web/packages/mem/index.html",
+      mtext(4,text=paste("mem R library - Jos",rawToChar(as.raw(233))," E. Lozano - https://github.com/lozalojo/mem",sep=""),
             line=7,cex=0.6,col="#404040")
 
       # Etiquetas de la leyenda
@@ -158,7 +158,7 @@ calcular.indicadores.2.timings<-function(i.current,
       text(semanas,-3.5*posicion.ticks/2,pos=2,label=paste("Sensitivity: ",format(round(sensibilidad,2),nsmall=2,align="right"),", Specificity: ",format(round(especificidad,2),nsmall=2,align="right"),sep=""),cex=0.5)
 
       axis(2,at=seq(-2.5,-1.5,1)*posicion.ticks/2,
-           labels=i.timing.labels,
+           labels=rev(i.timing.labels),
            tick=F,
            las=1,
            lwd=1,

@@ -5,12 +5,13 @@
 \title{Creates the surveillance graph of the current season}
 \usage{
 memsurveillance(i.current, i.epidemic.thresholds = NA,
-  i.intensity.thresholds = NA, i.mean.length = 10, i.output = ".",
-  i.graph.title = "", i.graph.file = T, i.graph.file.name = "",
-  i.week.report = NA, i.equal = F, i.pos.epidemic = F,
-  i.no.epidemic = F, i.no.intensity = F, i.epidemic.start = NA,
-  i.epidemic.end = NA, i.range.x = c(40, 20), i.range.x.53 = F,
-  i.range.y = NA, i.no.labels = F, i.start.end.marks = T)
+  i.intensity.thresholds = NA, i.mean.length = 10, i.force.length = F,
+  i.output = ".", i.graph.title = "", i.graph.subtitle = "",
+  i.graph.file = T, i.graph.file.name = "", i.week.report = NA,
+  i.equal = F, i.pos.epidemic = F, i.no.epidemic = F,
+  i.no.intensity = F, i.epidemic.start = NA, i.range.x = c(40, 20),
+  i.range.x.53 = F, i.range.y = NA, i.no.labels = F,
+  i.start.end.marks = T)
 }
 \arguments{
 \item{i.current}{Current season weekly rates.}
@@ -19,11 +20,15 @@ memsurveillance(i.current, i.epidemic.thresholds = NA,
 
 \item{i.intensity.thresholds}{Intensity thresholds.}
 
-\item{i.mean.length}{Mean length.}
+\item{i.mean.length}{Mean length of epidemic.}
+
+\item{i.force.length}{If you want to force the epidemic to be exactly as the mean length.}
 
 \item{i.output}{Directory where graph is saved.}
 
 \item{i.graph.title}{Title of the graph.}
+
+\item{i.graph.subtitle}{Subtitle of the graph.}
 
 \item{i.graph.file}{Graph to a file.}
 
@@ -40,8 +45,6 @@ memsurveillance(i.current, i.epidemic.thresholds = NA,
 \item{i.no.intensity}{Do not print intensity threholds.}
 
 \item{i.epidemic.start}{Week to force start of the epidemic.}
-
-\item{i.epidemic.end}{Week to force start of the epidemic.}
 
 \item{i.range.x}{Range of weeks.}
 
@@ -79,19 +82,19 @@ i.thr<-epi$intensity.thresholds
 # Set the working directory to whererever you want to store the graph file
 setwd(".")
 # The graph, default values
-memsurveillance(cur,e.thr,i.thr,i.graph.file=TRUE,
+m1<-memsurveillance(cur,e.thr,i.thr,i.graph.file=TRUE,
      i.graph.file.name="graph 1")
 # No intensity levels
-memsurveillance(cur,e.thr,i.thr,i.graph.file=TRUE,
+m2<-memsurveillance(cur,e.thr,i.thr,i.graph.file=TRUE,
      i.graph.file.name="graph 2",i.no.intensity=TRUE)
 # No start/end tickmarks
-memsurveillance(cur,e.thr,i.thr,i.graph.file=TRUE,
+m3<-memsurveillance(cur,e.thr,i.thr,i.graph.file=TRUE,
      i.graph.file.name="graph 3",i.start.end.marks=FALSE)
 # Post-epidemic threshold
-memsurveillance(cur,e.thr,i.thr,i.graph.file=TRUE,
+m4<-memsurveillance(cur,e.thr,i.thr,i.graph.file=TRUE,
      i.graph.file.name="graph 4",i.pos.epidemic=TRUE)
 # Report for week 2, instead of all data
-memsurveillance(cur,e.thr,i.thr,i.graph.file=TRUE,
+m5<-memsurveillance(cur,e.thr,i.thr,i.graph.file=TRUE,
      i.graph.file.name="graph 5",i.week.report=2)
 
 }

@@ -15,6 +15,9 @@ calcular.indicadores<-function(i.current,
                                i.graph=F,
                                i.graph.name=""){
 
+  #if (is.na(i.umbral.pre)) if (!is.na(i.umbral.pos)) i.umbral.pre<-i.umbral.pos else i.umbral.pre<-Inf
+  if (is.na(i.umbral.pre)) i.umbral.pre<-Inf
+  
   semanas<-dim(i.current)[1]
   nombre.semana<-rownames(i.current)
   numero.semana<-1:semanas
@@ -107,20 +110,47 @@ calcular.indicadores<-function(i.current,
   true.neg<-apply(resultado.3=="TN",1,sum,na.rm=T)
 
   sensibilidad<-true.pos/(true.pos+false.neg)
+  sensibilidad[is.nan(sensibilidad)]<-NA
   especificidad<-true.neg/(true.neg+false.pos)
-
-  sensibilidad.t<-true.pos.t/(true.pos.t+false.neg.t)
-  especificidad.t<-true.neg.t/(true.neg.t+false.pos.t)
-
-
+  especificidad[is.nan(especificidad)]<-NA
+  ppv<-true.pos/(true.pos+false.pos)
+  ppv[is.nan(ppv)]<-NA
+  npv<-true.neg/(true.neg+false.neg)
+  npv[is.nan(npv)]<-NA
+  pos.likehood.ratio<-sensibilidad/(1-especificidad)
+  pos.likehood.ratio[is.nan(pos.likehood.ratio)]<-NA
+  neg.likehood.ratio<-(1-sensibilidad)/especificidad
+  neg.likehood.ratio[is.nan(neg.likehood.ratio)]<-NA
+  
+  percent.agreement<-(true.pos+true.neg)/(true.pos+true.neg+false.pos+false.neg)
+  percent.agreement[is.nan(percent.agreement)]<-NA
+  
+  if (true.pos.t+false.neg.t>0) sensibilidad.t<-true.pos.t/(true.pos.t+false.neg.t) else sensibilidad.t<-NA
+  if (true.neg.t+false.pos.t>0) especificidad.t<-true.neg.t/(true.neg.t+false.pos.t) else especificidad.t<-NA
+  if (true.pos.t+false.pos.t>0) ppv.t<-true.pos.t/(true.pos.t+false.pos.t) else ppv.t<-NA
+  if (true.neg.t+false.neg.t>0) npv.t<-true.neg.t/(true.neg.t+false.neg.t) else npv.t<-NA
+  pos.likehood.ratio.t<-NA
+  if (!is.na(especificidad.t)) if (1-especificidad.t>0) pos.likehood.ratio.t<-sensibilidad.t/(1-especificidad.t) else pos.likehood.ratio.t<-NA
+  neg.likehood.ratio.t<-NA
+  if (!is.na(especificidad.t)) if (especificidad.t>0) neg.likehood.ratio.t<-(1-sensibilidad.t)/especificidad.t else neg.likehood.ratio.t<-NA
+  if (true.pos.t+true.neg.t+false.pos.t+false.neg.t>0) percent.agreement.t<-(true.pos.t+true.neg.t)/(true.pos.t+true.neg.t+false.pos.t+false.neg.t) else percent.agreement.t<-NA
+  
   semanas.not.na<-sum(!is.na(i.current))
 
-  indicadores.t<-as.matrix(c(semanas,semanas.not.na,true.pos.t,false.pos.t,true.neg.t,false.neg.t,sensibilidad.t,especificidad.t))
-  rownames(indicadores.t)<-c("Weeks","Non-missing weeks","True positives","False positives","True negatives","False negatives","Sensitivity","Specificity")
+  indicadores.t<-as.matrix(c(semanas,semanas.not.na,true.pos.t,false.pos.t,true.neg.t,
+                             false.neg.t,sensibilidad.t,especificidad.t,ppv.t,npv.t,
+                             pos.likehood.ratio.t,neg.likehood.ratio.t,percent.agreement.t))
+  rownames(indicadores.t)<-c("Weeks","Non-missing weeks","True positives","False positives",
+                             "True negatives","False negatives","Sensitivity","Specificity",
+                             "Positive predictive value","Negative predictive value",
+                             "Positive likehood ratio","Negative likehood ratio","Percent agreement")
   colnames(indicadores.t)<-"values"
 
-  indicadores<-data.frame(parametro=i.valores.parametro.deteccion,semanas=semanas,semanas.not.na=semanas.not.na,true.pos=true.pos,false.pos=false.pos,
-                          true.neg=true.neg,false.neg=false.neg,sensibilidad=sensibilidad,especificidad=especificidad)
+  indicadores<-data.frame(parametro=i.valores.parametro.deteccion,semanas=semanas,semanas.not.na=semanas.not.na,
+                          true.pos=true.pos,false.pos=false.pos,true.neg=true.neg,false.neg=false.neg,
+                          sensibilidad=sensibilidad,especificidad=especificidad,ppv=ppv,npv=npv,
+                          pos.likehood.ratio=pos.likehood.ratio,neg.likehood.ratio=neg.likehood.ratio,
+                          percent.agreement=percent.agreement)
 
   if (i.graph){
 
@@ -171,7 +201,7 @@ calcular.indicadores<-function(i.current,
     # calculo el rango y para que tenga 10 marcas o este cerca
 
     maximo.y<-max.fix.na(dgraf)
-    posicion.ticks<-calcular.tickmarks(maximo.y)$posicion.ticks
+    posicion.ticks<-optimal.tickmarks(0,maximo.y,10)$by
     range.y<-c(-1.5*posicion.ticks,ceiling(maximo.y/posicion.ticks)*posicion.ticks)
     range.y.seq<-seq(0,ceiling(maximo.y/posicion.ticks)*posicion.ticks,posicion.ticks)
 
@@ -215,7 +245,7 @@ calcular.indicadores<-function(i.current,
       axis(1,at=seq(2,semanas,2),tick=F,mgp=c(3, 0.5, 0),
            labels=nombre.semana[seq(2,semanas,2)],cex.axis=0.6,line=0.60,col.axis="#404040",col="#C0C0C0")
       mtext(1,text="Week",line=2.5,cex=0.8,col="#000040")
-      mtext(4,text="mem R library - Jos? E. Lozano - https://cran.r-project.org/web/packages/mem/index.html",
+      mtext(4,text=paste("mem R library - Jos",rawToChar(as.raw(233))," E. Lozano - https://github.com/lozalojo/mem",sep=""),
             line=7,cex=0.6,col="#404040")
       # Etiquetas de los 4 umbrales
 

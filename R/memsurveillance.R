@@ -12,9 +12,11 @@
 #' @param i.current Current season weekly rates.
 #' @param i.epidemic.thresholds Pre and post epidemic threholds.
 #' @param i.intensity.thresholds Intensity thresholds.
-#' @param i.mean.length Mean length.
+#' @param i.mean.length Mean length of epidemic.
+#' @param i.force.length If you want to force the epidemic to be exactly as the mean length.
 #' @param i.output Directory where graph is saved.
 #' @param i.graph.title Title of the graph.
+#' @param i.graph.subtitle Subtitle of the graph.
 #' @param i.graph.file Graph to a file.
 #' @param i.graph.file.name Name of the graph.
 #' @param i.week.report Week to use in the report.
@@ -23,7 +25,6 @@
 #' @param i.no.epidemic Force no start of the epidemic, print only the epidemic threshold.
 #' @param i.no.intensity Do not print intensity threholds.
 #' @param i.epidemic.start Week to force start of the epidemic.
-#' @param i.epidemic.end Week to force start of the epidemic.
 #' @param i.range.x Range of weeks.
 #' @param i.range.x.53 Is there a week 53 this season.
 #' @param i.range.y Range of graph.
@@ -47,19 +48,19 @@
 #' # Set the working directory to whererever you want to store the graph file
 #' setwd(".")
 #' # The graph, default values
-#' memsurveillance(cur,e.thr,i.thr,i.graph.file=TRUE,
+#' m1<-memsurveillance(cur,e.thr,i.thr,i.graph.file=TRUE,
 #'      i.graph.file.name="graph 1")
 #' # No intensity levels
-#' memsurveillance(cur,e.thr,i.thr,i.graph.file=TRUE,
+#' m2<-memsurveillance(cur,e.thr,i.thr,i.graph.file=TRUE,
 #'      i.graph.file.name="graph 2",i.no.intensity=TRUE)
 #' # No start/end tickmarks
-#' memsurveillance(cur,e.thr,i.thr,i.graph.file=TRUE,
+#' m3<-memsurveillance(cur,e.thr,i.thr,i.graph.file=TRUE,
 #'      i.graph.file.name="graph 3",i.start.end.marks=FALSE)
 #' # Post-epidemic threshold
-#' memsurveillance(cur,e.thr,i.thr,i.graph.file=TRUE,
+#' m4<-memsurveillance(cur,e.thr,i.thr,i.graph.file=TRUE,
 #'      i.graph.file.name="graph 4",i.pos.epidemic=TRUE)
 #' # Report for week 2, instead of all data
-#' memsurveillance(cur,e.thr,i.thr,i.graph.file=TRUE,
+#' m5<-memsurveillance(cur,e.thr,i.thr,i.graph.file=TRUE,
 #'      i.graph.file.name="graph 5",i.week.report=2)
 #'
 #' @author Jose E. Lozano \email{lozalojo@@gmail.com}
@@ -76,13 +77,15 @@
 #'
 #' @export
 #' @importFrom grDevices dev.off rgb tiff
-#' @importFrom graphics abline axis legend matplot mtext par points text
+#' @importFrom graphics abline axis legend matplot mtext par points text lines
 memsurveillance<-function(i.current,
                        i.epidemic.thresholds=NA,
                        i.intensity.thresholds=NA,
                        i.mean.length=10,
+                       i.force.length=F,
                        i.output=".",
                        i.graph.title="",
+                       i.graph.subtitle="",
                        i.graph.file=T,
                        i.graph.file.name="",
                        i.week.report=NA,
@@ -91,12 +94,13 @@ memsurveillance<-function(i.current,
                        i.no.epidemic=F,
                        i.no.intensity=F,
                        i.epidemic.start=NA,
-                       i.epidemic.end=NA,
                        i.range.x=c(40,20),
                        i.range.x.53=F,
                        i.range.y=NA,
                        i.no.labels=F,
                        i.start.end.marks=T){
+
+  if (is.null(dim(i.current))) stop('Incorrect number of dimensions, input must be a data.frame.') else if (!(ncol(i.current)==1)) stop('Incorrect number of dimensions, only one season required.')
 
   if (!is.numeric(i.epidemic.thresholds) | length(i.epidemic.thresholds)==1) i.epidemic.thresholds<-rep(NA,2)
   if (!is.numeric(i.intensity.thresholds) | length(i.intensity.thresholds)==1) i.intensity.thresholds<-rep(NA,3)
@@ -153,12 +157,21 @@ memsurveillance<-function(i.current,
   }
 
   if (!is.na(semana.inicio)){
-    if (!is.na(semana.inicio.real)){
-      semana.fin.1<-(1:semanas)[current.season[,2]<umbral.pos & semana.inicio.real<(1:semanas)]
+    # if (!is.na(semana.inicio.real)){
+    #   # semana.fin.1<-(1:semanas)[current.season[,2]<umbral.pos & semana.inicio.real<(1:semanas)]
+    #   punto.de.busqueda<-max(semana.inicio,semana.inicio.real,na.rm=T)
+    #   semana.fin.1<-(1:semanas)[current.season[,2]<umbral.pos & punto.de.busqueda<(1:semanas)]
+    # }else{
+    #   semana.fin.1<-(1:semanas)[current.season[,2]<umbral.pos & semana.inicio<(1:semanas)]
+    # }
+    if (i.force.length){
+      semana.fin<-semana.inicio+i.mean.length
+      if (semana.fin>semanas) semana.fin<-NA
     }else{
-      semana.fin.1<-(1:semanas)[current.season[,2]<umbral.pos & semana.inicio<(1:semanas)]
+      punto.de.busqueda<-max(semana.inicio,semana.inicio.real,na.rm=T)
+      semana.fin.1<-(1:semanas)[current.season[,2]<umbral.pos & punto.de.busqueda<(1:semanas)]
+      if (any(semana.fin.1,na.rm=T)) semana.fin<-min(semana.fin.1,na.rm=T) else semana.fin<-NA
     }
-    if (any(semana.fin.1,na.rm=T)) semana.fin<-min(semana.fin.1,na.rm=T) else semana.fin<-NA
   }else{
     semana.fin<-NA
   }
@@ -207,18 +220,21 @@ memsurveillance<-function(i.current,
   intensidades.3<-array(dim=c(semanas,3))
   intensidades<-rbind(intensidades.1,intensidades.2,intensidades.3)[1:semanas,]
   dgraf<-as.data.frame(cbind(current.season[,2],umbrales,intensidades))
-  names(dgraf)<-c("Rate","Epidemic threshold",paste("Intensidad",1:3))
+  names(dgraf)<-c("Value","Epidemic threshold",paste("Intensidad",1:3))
   if (i.graph.file.name=="") graph.name="mem surveillance graph" else graph.name<-i.graph.file.name
-  etiquetas<-c("Weekly rates","Epidemic","Medium","High","Very high")
+  etiquetas<-c("Weekly values","Epidemic","Medium","High","Very high")
   tipos<-c(1,2,2,2,2)
   anchos<-c(3,2,2,2,2)
   colores<-c("#808080","#8c6bb1","#88419d","#810f7c","#4d004b")
-  if (is.numeric(i.range.y)) range.y<-i.range.y else range.y<-1.05*c(0,max.fix.na(dgraf))
+
+  if (is.numeric(i.range.y)) range.y.bus<-i.range.y else range.y.bus<-c(0,max.fix.na(dgraf))
+  otick<-optimal.tickmarks(range.y.bus[1],range.y.bus[2],10)
+  range.y<-c(otick$range[1],otick$range[2]+otick$by/2)
 
   if (i.graph.file) tiff(filename=paste(i.output,"/",graph.name,".tiff",sep=""),width=8,height=6,units="in",pointsize="12",
        compression="lzw",bg="white",res=300,antialias="none")
 
-  opar<-par(mar=c(4,3,1,2)+0.1,mgp=c(3,0.5,0),xpd=T)
+  opar<-par(mar=c(5,3,3,3)+0.1,mgp=c(3,0.5,0),xpd=T)
   # Grafico principal
   matplot(1:semanas,
           dgraf,
@@ -229,20 +245,38 @@ memsurveillance<-function(i.current,
   # Puntos de la serie de tasas
   points(1:semanas,dgraf[,1],pch=19,type="p",col="#000000",cex=1)
   # Marcas de inicio y fin
-  if (is.na(semana.inicio.forzado) & i.start.end.marks){
+  # if (is.na(semana.inicio.forzado) & i.start.end.marks){
+  if (i.start.end.marks){
     if (!is.na(semana.inicio)) points(x=semana.inicio,y=current.season[semana.inicio,2],pch=1,bg="#FFFFFF",col="#FF0000",lwd=7)
     if (!is.na(semana.fin) & i.pos.epidemic) points(x=semana.fin,y=current.season[semana.fin,2],pch=1,bg="#FFFFFF",col="#40FF40",lwd=7)
   }
   # Ejes
-  axis(2,ylim=range.y,lwd=1,cex.axis=0.6,col.axis="#404040",col="#C0C0C0")
-  mtext(2,text="Weekly rate",line=1.3,cex=0.8,col="#000040")
-  axis(1,at=seq(1,semanas,1),labels=F,cex.axis=0.7,col.axis="#404040",col="#C0C0C0")
-  axis(1,at=seq(1,semanas,2),tick=F,
-       labels=esquema.semanas$nombre.semana[seq(1,semanas,2)],cex.axis=0.7,col.axis="#404040",col="#C0C0C0")
-  axis(1,at=seq(2,semanas,2),tick=F,
-       labels=esquema.semanas$nombre.semana[seq(2,semanas,2)],cex.axis=0.7,line=0.60,col.axis="#404040",col="#C0C0C0")
-  mtext(1,text="Week",line=2,cex=0.8,col="#000040")
-  mtext(4,text="mem R library - Jose E. Lozano - https://cran.r-project.org/web/packages/mem/index.html",
+  axis(1,at=seq(1,semanas,1),
+       labels=F,
+       cex.axis=0.7,
+       col.axis="#404040",
+       col="#C0C0C0")
+  axis(1,at=seq(1,semanas,2),
+       tick=F,
+       labels=esquema.semanas$nombre.semana[seq(1,semanas,2)],
+       cex.axis=0.7,
+       col.axis="#404040",
+       col="#C0C0C0")
+  axis(1,at=seq(2,semanas,2),
+       tick=F,
+       labels=esquema.semanas$nombre.semana[seq(2,semanas,2)],
+       cex.axis=0.7,
+       line=0.75,
+       col.axis="#404040",col="#C0C0C0")
+  axis(2,at=otick$tickmarks,
+       lwd=1,
+       cex.axis=0.6,
+       col.axis="#404040",
+       col="#C0C0C0")
+  mtext(1,text="Week",line=2.5,cex=0.8,col="#000040")
+  mtext(2,text="Weekly value",line=1.3,cex=0.8,col="#000040")
+  mtext(3,text=i.graph.subtitle,cex=0.8,col="#000040")  
+  mtext(4,text=paste("mem R library - Jos",rawToChar(as.raw(233))," E. Lozano - https://github.com/lozalojo/mem",sep=""),
         line=0.75,cex=0.6,col="#404040")
   # Etiquetas de los 4 umbrales
   if (!i.no.labels){
@@ -315,7 +349,17 @@ memsurveillance<-function(i.current,
   #          bg=rev(bg.leyenda),
   #          cex=0.9
   #          )
-  legend("topright",inset=c(0,0),
+
+  if (is.na(semana.inicio) | is.na(semana.fin)){
+    xa<-"topright"
+    ya<-NULL
+  }else{
+    #ya<-otick$range[2]
+    #if ((semana.inicio-1)<=(semanas-semana.fin)) xa<-semana.fin+1 else xa<-1
+    if (semana.fin<0.80*semanas) xa<-"topright" else xa<-"topleft"
+    ya<-NULL
+  }
+  legend(x=xa,y=ya,inset=c(0,-0.05),xjust=0,
          legend=rev(etiquetas.leyenda),
          bty="n",
          lty=rev(tipos.leyenda),
@@ -323,13 +367,14 @@ memsurveillance<-function(i.current,
          col=rev(colores.leyenda),
          pch=rev(puntos.leyenda),
          bg=rev(bg.leyenda),
-         cex=0.9,
+         cex=0.75,
+         x.intersp=0.5,
+         y.intersp=0.7,
          text.col="#000000",
-         ncol=1
-  )
+         ncol=1)
   par(opar)
   if (i.graph.file) dev.off()
-  if (i.graph.file) cat("graph created: ",getwd(),"/",i.output,"/",graph.name,".tiff","\n",sep="")
+  #if (i.graph.file) cat("graph created: ",getwd(),"/",i.output,"/",graph.name,".tiff","\n",sep="")
 
   n.season.scheme<-dim(current.season)[1]
   season.scheme<-rep(0,n.season.scheme)
@@ -358,6 +403,7 @@ memsurveillance<-function(i.current,
                                param.epidemic.thresholds=i.epidemic.thresholds,
                                param.intensity.thresholds=i.intensity.thresholds,
                                param.mean.length=i.mean.length,
+                               param.force.length=i.force.length,
                                param.output=i.output,
                                param.graph.title=i.graph.title,
                                param.graph.file=i.graph.file,
@@ -368,7 +414,6 @@ memsurveillance<-function(i.current,
                                param.no.epidemic=i.no.epidemic,
                                param.no.intensity=i.no.intensity,
                                param.epidemic.start=i.epidemic.start,
-                               param.epidemic.end=i.epidemic.end,
                                param.range.x=i.range.x,
                                param.range.x.53=i.range.x.53,
                                param.range.y=i.range.y,
