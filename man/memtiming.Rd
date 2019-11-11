@@ -18,8 +18,9 @@ memtiming(i.data, i.n.values = 5, i.method = 2, i.param = 2.8)
 }
 \value{
 \code{memtiming} returns an object of class \code{epidemic}.
-  An object of class \code{epidemic} is a list containing at least the following components:
-    \item{i.data }{input data}
+An object of class \code{epidemic} is a list containing at least the following components:
+\itemize{
+  \item{i.data }{input data}
   \item{data }{data with missing rates filled with data from smothing regression}
   \item{map.curve }{MAP curve}
   \item{optimum.map }{optimum}
@@ -30,45 +31,53 @@ memtiming(i.data, i.n.values = 5, i.method = 2, i.param = 2.8)
   \item{epi.data }{epidemic rates}
   \item{post.epi.data }{post-epidemic rates}
 }
+}
 \description{
 Function \code{memtiming} is used to find the optimal timing of an influenza epidemic
 in a set of weekly influenza surveillance rates. It provides the start and the end of
 the epidemic, also it returns a list of pre-epidemic and post-epidemic rates that can
-be used to calculate influenza baselines and thresholds.\cr
+be used to calculate influenza baselines and thresholds.
+}
+\details{
 The method to calculate the optimal timing of an epidemic is described as part of the
 \emph{Moving Epidemics Method} (MEM), used to monitor influenza activity in a weekly
 surveillance system.
-}
-\details{
+
 Input data is a vector of rates that represent a full influenza surveillance season.
 It can start and end at any week (tipically at week 40th), and rates can be expressed
 as per 100,000 inhabitants (or per consultations, if population is not available) or
-any other scale.\cr
+any other scale.
+
 The \code{i.n.values} parameter is used to get information from the pre-epidemic and
 post-epidemic period. The function will extract the highest pre/post values in order
 to use it later to calculate other influenza indicators, such as baseline activity or
 threshold for influenza epidemic.
+
 Depending of the value \code{i.method}, the function will use a different method to
 calculate the optimum epidemic timing.
-\tabular{rlll}{
-\tab [1] \tab original method\cr
-\tab [2] \tab fixed criterium method\cr
-\tab [3] \tab slope method\cr
-\tab [4] \tab second derivative method\cr
+
+\itemize{
+\item{1} {original method}
+\item{2} {fixed criterium method}
+\item{3} {slope method}
+\item{4} {second derivative method}
 }
-All methods are based upon the MAP curve, as described in the MEM Method.\cr
+
+All methods are based upon the MAP curve, as described in the MEM Method.
+
 The \emph{original method} uses the process shown in the original paper, which describes
 the MEM as it was created. The \emph{fixed criterium method} is an update of the MEM
 that uses the slope of the MAP curve fo find the optimum, which is the point where the
 slope is lower than a predefined value. The \emph{slope method} also calculates the
 slope of the MAP curve, but the optimum is the one that matches the global/mean slope.
 The \emph{second derivative method} calculates the second derivative and equals to zero
-to search an inflexion point in the original curve.\cr
+to search an inflexion point in the original curve.
+
 Two of the four methods require an additional parameter \code{i.param}: for the
 \emph{fixed criterium method} is the predefined value to find the optimum, which
 typically is 2.5-3.0\%, and for the \emph{original method} it is needed the window
 parameter to smooth the map curve. A value of \code{-1} indicates it should use
-\code{\link{h.select}} to select the window parameter. See \code{\link{sm}} for more
+\code{\link[sm]{h.select}} to select the window parameter. See \code{\link[sm]{sm}} for more
 information about this topic.
 }
 \examples{
@@ -81,16 +90,22 @@ summary(tim)
 plot(tim)
 
 }
+\references{
+Vega T, Lozano JE, Ortiz de Lejarazu R, Gutierrez Perez M. Modelling influenza epidemic - can we
+detect the beginning and predict the intensity and duration? Int Congr Ser. 2004 Jun;1263:281-3.
+
+Vega T, Lozano JE, Meerhoff T, Snacken R, Mott J, Ortiz de Lejarazu R, et al. Influenza surveillance
+in Europe: establishing epidemic thresholds by the moving epidemic method. Influenza Other Respir
+Viruses. 2013 Jul;7(4):546-58. DOI:10.1111/j.1750-2659.2012.00422.x.
+
+Vega T, Lozano JE, Meerhoff T, Snacken R, Beaute J, Jorgensen P, et al. Influenza surveillance in
+Europe: comparing intensity levels calculated using the moving epidemic method. Influenza Other
+Respir Viruses. 2015 Sep;9(5):234-46. DOI:10.1111/irv.12330.
+
+Lozano JE. lozalojo/mem: Second release of the MEM R library. Zenodo [Internet]. [cited 2017 Feb 1];
+Available from: \url{https://zenodo.org/record/165983}. DOI:10.5281/zenodo.165983
+}
 \author{
 Jose E. Lozano \email{lozalojo@gmail.com}
 }
-\references{
-Vega T., Lozano J.E. (2004) Modelling influenza epidemic - can we detect the beginning
-and predict the intensity and duration? International Congress Series 1263 (2004)
-281-283.\cr
-Vega T., Lozano J.E. (2012) Influenza surveillance in Europe: establishing epidemic
-thresholds by the Moving Epidemic Method. Influenza and Other Respiratory Viruses,
-DOI:10.1111/j.1750-2659.2012.00422.x.
-}
 \keyword{influenza}
-

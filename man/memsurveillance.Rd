@@ -5,13 +5,13 @@
 \title{Creates the surveillance graph of the current season}
 \usage{
 memsurveillance(i.current, i.epidemic.thresholds = NA,
-  i.intensity.thresholds = NA, i.mean.length = 10, i.force.length = F,
-  i.output = ".", i.graph.title = "", i.graph.subtitle = "",
-  i.graph.file = T, i.graph.file.name = "", i.week.report = NA,
-  i.equal = F, i.pos.epidemic = F, i.no.epidemic = F,
-  i.no.intensity = F, i.epidemic.start = NA, i.range.x = c(40, 20),
-  i.range.x.53 = F, i.range.y = NA, i.no.labels = F,
-  i.start.end.marks = T)
+  i.intensity.thresholds = NA, i.mean.length = 10,
+  i.force.length = F, i.output = ".", i.graph.title = "",
+  i.graph.subtitle = "", i.graph.file = T, i.graph.file.name = "",
+  i.week.report = NA, i.equal = F, i.pos.epidemic = F,
+  i.no.epidemic = F, i.no.intensity = F, i.epidemic.start = NA,
+  i.range.x = c(40, 20), i.range.x.53 = F, i.range.y = NA,
+  i.no.labels = F, i.start.end.marks = T)
 }
 \arguments{
 \item{i.current}{Current season weekly rates.}
@@ -67,6 +67,21 @@ Input data must be the current season and an object of class \code{mem}. The out
 graph contains the weekly rates series along with the epidemic and intensity threshols
 located at the exact situation where the epidemic started. If there is no epidemic yet,
 only the epidemic threshold is placed.
+
+Surveillance consist on:
+\enumerate{
+\item Draw weekly values along with the pre-epidemic threshold.
+\item When the weekly value rises above the threshold a marker of the start of
+the epidemic is placed and the intensity thresholds are drawn.
+\item When the weekly value goes down the post-epidemic threshold, the marker of
+the end of the epidemic is placed and the post-epidemic threshold is added to the graph.
+}
+The Surveillance Week allows select the week to use in the surveillance, the values of
+the surveillance season are shown only up to this week, and the program will ignore
+values past this week.
+
+The Force epidemic start allows to force the placement of the epidemic start marker
+at a given week instead of using the first week above the epidemic threshold.
 }
 \examples{
 # Castilla y Leon Influenza Rates data
@@ -98,16 +113,22 @@ m5<-memsurveillance(cur,e.thr,i.thr,i.graph.file=TRUE,
      i.graph.file.name="graph 5",i.week.report=2)
 
 }
+\references{
+Vega T, Lozano JE, Ortiz de Lejarazu R, Gutierrez Perez M. Modelling influenza epidemic - can we
+detect the beginning and predict the intensity and duration? Int Congr Ser. 2004 Jun;1263:281-3.
+
+Vega T, Lozano JE, Meerhoff T, Snacken R, Mott J, Ortiz de Lejarazu R, et al. Influenza surveillance
+in Europe: establishing epidemic thresholds by the moving epidemic method. Influenza Other Respir
+Viruses. 2013 Jul;7(4):546-58. DOI:10.1111/j.1750-2659.2012.00422.x.
+
+Vega T, Lozano JE, Meerhoff T, Snacken R, Beaute J, Jorgensen P, et al. Influenza surveillance in
+Europe: comparing intensity levels calculated using the moving epidemic method. Influenza Other
+Respir Viruses. 2015 Sep;9(5):234-46. DOI:10.1111/irv.12330.
+
+Lozano JE. lozalojo/mem: Second release of the MEM R library. Zenodo [Internet]. [cited 2017 Feb 1];
+Available from: \url{https://zenodo.org/record/165983}. DOI:10.5281/zenodo.165983
+}
 \author{
 Jose E. Lozano \email{lozalojo@gmail.com}
 }
-\references{
-Vega T., Lozano J.E. (2004) Modelling influenza epidemic - can we detect the beginning
-and predict the intensity and duration? International Congress Series 1263 (2004)
-281-283.\cr
-Vega T., Lozano J.E. (2012) Influenza surveillance in Europe: establishing epidemic
-thresholds by the Moving Epidemic Method. Influenza and Other Respiratory Viruses,
-DOI:10.1111/j.1750-2659.2012.00422.x.
-}
 \keyword{influenza}
-

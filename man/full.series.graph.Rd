@@ -4,11 +4,12 @@
 \alias{full.series.graph}
 \title{Creates the historical series graph of the datasets}
 \usage{
-full.series.graph(i.data, i.range.x = c(30, 29), i.range.y = NA,
+full.series.graph(i.data, i.range.x = NA, i.range.y = NA,
   i.output = ".", i.graph.title = "", i.graph.subtitle = "",
   i.graph.file = T, i.graph.file.name = "", i.plot.timing = F,
-  i.plot.intensity = F, i.color.pattern = c("#C0C0C0", "#606060", "#000000",
-  "#808080", "#000000", "#001933", "#00C000", "#800080", "#FFB401", "#8c6bb1",
+  i.plot.intensity = F, i.alternative.thresholds = NA,
+  i.color.pattern = c("#C0C0C0", "#606060", "#000000", "#808080",
+  "#000000", "#001933", "#00C000", "#800080", "#FFB401", "#8c6bb1",
   "#88419d", "#810f7c", "#4d004b"), ...)
 }
 \arguments{
@@ -32,34 +33,41 @@ full.series.graph(i.data, i.range.x = c(30, 29), i.range.y = NA,
 
 \item{i.plot.intensity}{Plot the intensity levels.}
 
+\item{i.alternative.thresholds}{Use alternative thresholds, instead of the ones modelled by the input data (epidemic + 3 intensity thresholds)}
+
 \item{i.color.pattern}{colors to use in the graph.}
 
 \item{...}{other parameters passed to memmodel.}
 }
 \value{
 \code{full.series.graph} writes a tiff graph of the full series of the dataset.
-
-Color codes:
-1: Axis.
-2: Tickmarks.
-3: Axis labels.
-4: Series line.
-5: Series dots (default).
-6: Title and subtitle.
-7: Series dots (pre-epidemic).
-8: Series dots (epidemic).
-9: Series dots (post-epidemic).
-10: Epidemic threshold.
-11: Medium threshold.
-12: High threshold.
-13: Very high threshold.
 }
 \description{
-Function \code{full.series.graph} creates a graph with the whole data.
+Function \code{full.series.graph} creates a graph with the whole dataset.
 }
 \details{
 Input data must be a data.frame with each column a surveillance season and each
 row a week.
+
+The resulting graph is a time series-like plot showing all the columns in the
+original dataset one after another.
+
+Color codes:
+\enumerate{
+\item Axis.
+\item Tickmarks.
+\item Axis labels.
+\item Series line.
+\item Series dots (default).
+\item Title and subtitle.
+\item Series dots (pre-epidemic).
+\item Series dots (epidemic).
+\item Series dots (post-epidemic).
+\item Epidemic threshold.
+\item Medium threshold.
+\item High threshold.
+\item Very high threshold.
+}
 }
 \examples{
 # Castilla y Leon Influenza Rates data
@@ -68,16 +76,22 @@ data(flucyl)
 full.series.graph(flucyl)
 
 }
+\references{
+Vega T, Lozano JE, Ortiz de Lejarazu R, Gutierrez Perez M. Modelling influenza epidemic - can we
+detect the beginning and predict the intensity and duration? Int Congr Ser. 2004 Jun;1263:281-3.
+
+Vega T, Lozano JE, Meerhoff T, Snacken R, Mott J, Ortiz de Lejarazu R, et al. Influenza surveillance
+in Europe: establishing epidemic thresholds by the moving epidemic method. Influenza Other Respir
+Viruses. 2013 Jul;7(4):546-58. DOI:10.1111/j.1750-2659.2012.00422.x.
+
+Vega T, Lozano JE, Meerhoff T, Snacken R, Beaute J, Jorgensen P, et al. Influenza surveillance in
+Europe: comparing intensity levels calculated using the moving epidemic method. Influenza Other
+Respir Viruses. 2015 Sep;9(5):234-46. DOI:10.1111/irv.12330.
+
+Lozano JE. lozalojo/mem: Second release of the MEM R library. Zenodo [Internet]. [cited 2017 Feb 1];
+Available from: \url{https://zenodo.org/record/165983}. DOI:10.5281/zenodo.165983
+}
 \author{
 Jose E. Lozano \email{lozalojo@gmail.com}
 }
-\references{
-Vega T., Lozano J.E. (2004) Modelling influenza epidemic - can we detect the beginning
-and predict the intensity and duration? International Congress Series 1263 (2004)
-281-283.\cr
-Vega T., Lozano J.E. (2012) Influenza surveillance in Europe: establishing epidemic
-thresholds by the Moving Epidemic Method. Influenza and Other Respiratory Viruses,
-DOI:10.1111/j.1750-2659.2012.00422.x.
-}
 \keyword{influenza}
-

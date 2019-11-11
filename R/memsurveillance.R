@@ -1,11 +1,7 @@
-#' Creates the surveillance graph of the current season
+#' @title Creates the surveillance graph of the current season
 #'
+#' @description
 #' Function \code{memsurveillance} creates a surveillance graph for the current season.
-#'
-#' Input data must be the current season and an object of class \code{mem}. The output
-#' graph contains the weekly rates series along with the epidemic and intensity threshols
-#' located at the exact situation where the epidemic started. If there is no epidemic yet,
-#' only the epidemic threshold is placed.
 #'
 #' @name memsurveillance
 #'
@@ -33,6 +29,27 @@
 #'
 #' @return
 #' \code{memsurveillance} writes a tiff graph of the surveillance of this season.
+#'
+#' @details
+#' Input data must be the current season and an object of class \code{mem}. The output
+#' graph contains the weekly rates series along with the epidemic and intensity threshols
+#' located at the exact situation where the epidemic started. If there is no epidemic yet,
+#' only the epidemic threshold is placed.
+#'
+#' Surveillance consist on:
+#' \enumerate{
+#' \item Draw weekly values along with the pre-epidemic threshold.
+#' \item When the weekly value rises above the threshold a marker of the start of
+#' the epidemic is placed and the intensity thresholds are drawn.
+#' \item When the weekly value goes down the post-epidemic threshold, the marker of
+#' the end of the epidemic is placed and the post-epidemic threshold is added to the graph.
+#' }
+#' The Surveillance Week allows select the week to use in the surveillance, the values of
+#' the surveillance season are shown only up to this week, and the program will ignore
+#' values past this week.
+#'
+#' The Force epidemic start allows to force the placement of the epidemic start marker
+#' at a given week instead of using the first week above the epidemic threshold.
 #'
 #' @examples
 #' # Castilla y Leon Influenza Rates data
@@ -66,12 +83,19 @@
 #' @author Jose E. Lozano \email{lozalojo@@gmail.com}
 #'
 #' @references
-#' Vega T., Lozano J.E. (2004) Modelling influenza epidemic - can we detect the beginning
-#' and predict the intensity and duration? International Congress Series 1263 (2004)
-#' 281-283.\cr
-#' Vega T., Lozano J.E. (2012) Influenza surveillance in Europe: establishing epidemic
-#' thresholds by the Moving Epidemic Method. Influenza and Other Respiratory Viruses,
-#' DOI:10.1111/j.1750-2659.2012.00422.x.
+#' Vega T, Lozano JE, Ortiz de Lejarazu R, Gutierrez Perez M. Modelling influenza epidemic - can we
+#' detect the beginning and predict the intensity and duration? Int Congr Ser. 2004 Jun;1263:281-3.
+#'
+#' Vega T, Lozano JE, Meerhoff T, Snacken R, Mott J, Ortiz de Lejarazu R, et al. Influenza surveillance
+#' in Europe: establishing epidemic thresholds by the moving epidemic method. Influenza Other Respir
+#' Viruses. 2013 Jul;7(4):546-58. DOI:10.1111/j.1750-2659.2012.00422.x.
+#'
+#' Vega T, Lozano JE, Meerhoff T, Snacken R, Beaute J, Jorgensen P, et al. Influenza surveillance in
+#' Europe: comparing intensity levels calculated using the moving epidemic method. Influenza Other
+#' Respir Viruses. 2015 Sep;9(5):234-46. DOI:10.1111/irv.12330.
+#'
+#' Lozano JE. lozalojo/mem: Second release of the MEM R library. Zenodo [Internet]. [cited 2017 Feb 1];
+#' Available from: \url{https://zenodo.org/record/165983}. DOI:10.5281/zenodo.165983
 #'
 #' @keywords influenza
 #'
@@ -122,18 +146,19 @@ memsurveillance<-function(i.current,
 
   # Acomodamos i.current al esquema
   current.season<-i.current
+  names(current.season)<-"rates"
   current.season$nombre.semana<-rownames(i.current)
   rownames(current.season)<-NULL
-  current.season<-merge(current.season,esquema.semanas,by="nombre.semana",all.y=T)
+  current.season<-merge(esquema.semanas,current.season,by="nombre.semana",all.x=T)
   current.season<-current.season[order(current.season$numero.semana),]
   rownames(current.season)<-NULL
 
   # limitamos a la semana del informe (i.week.report)
   if (!is.na(i.week.report) & any(i.week.report==as.numeric(esquema.semanas$nombre.semana))){
     semana.report<-((1:semanas)[i.week.report==as.numeric(esquema.semanas$nombre.semana)])[1]
-    if (!is.na(semana.report) & semana.report<semanas) current.season[(semana.report+1):semanas,]<-NA
+    if (!is.na(semana.report) & semana.report<semanas) current.season$rates[(semana.report+1):semanas]<-NA
   }else{
-    semana.report<-max((1:semanas)[!is.na(current.season[,2])],na.rm=T)
+    if (all(is.na(current.season$rates))) semana.report<-semanas else semana.report<-max((1:semanas)[!is.na(current.season$rates)],na.rm=T)
   }
 
   # Preparacion de datos necesarios
@@ -143,7 +168,7 @@ memsurveillance<-function(i.current,
 
   # Si el inicio forzado de la epidemia es posterior a la semana del informe, quitamos
   if (!is.na(i.epidemic.start)) semana.inicio.forzado<-((1:semanas)[i.epidemic.start==as.numeric(esquema.semanas$nombre.semana)])[1] else semana.inicio.forzado<-NA
-  if (any(current.season[,2]>umbral.pre,na.rm=T)) semana.inicio.real<-min((1:semanas)[current.season[,2]>umbral.pre],na.rm=T) else semana.inicio.real<-NA
+  if (any(current.season$rates>umbral.pre,na.rm=T)) semana.inicio.real<-min((1:semanas)[current.season$rates>umbral.pre],na.rm=T) else semana.inicio.real<-NA
   if (!is.na(semana.inicio.forzado)){
     if (semana.inicio.forzado>semana.report) semana.inicio.forzado<-NA
   }
@@ -156,20 +181,22 @@ memsurveillance<-function(i.current,
     semana.inicio<-semana.inicio.real
   }
 
+  week.peak<-which.max(current.season$rates)
+
   if (!is.na(semana.inicio)){
     # if (!is.na(semana.inicio.real)){
-    #   # semana.fin.1<-(1:semanas)[current.season[,2]<umbral.pos & semana.inicio.real<(1:semanas)]
+    #   # semana.fin.1<-(1:semanas)[current.season$rates<umbral.pos & semana.inicio.real<(1:semanas)]
     #   punto.de.busqueda<-max(semana.inicio,semana.inicio.real,na.rm=T)
-    #   semana.fin.1<-(1:semanas)[current.season[,2]<umbral.pos & punto.de.busqueda<(1:semanas)]
+    #   semana.fin.1<-(1:semanas)[current.season$rates<umbral.pos & punto.de.busqueda<(1:semanas)]
     # }else{
-    #   semana.fin.1<-(1:semanas)[current.season[,2]<umbral.pos & semana.inicio<(1:semanas)]
+    #   semana.fin.1<-(1:semanas)[current.season$rates<umbral.pos & semana.inicio<(1:semanas)]
     # }
     if (i.force.length){
       semana.fin<-semana.inicio+i.mean.length
       if (semana.fin>semanas) semana.fin<-NA
     }else{
-      punto.de.busqueda<-max(semana.inicio,semana.inicio.real,na.rm=T)
-      semana.fin.1<-(1:semanas)[current.season[,2]<umbral.pos & punto.de.busqueda<(1:semanas)]
+      punto.de.busqueda<-max(semana.inicio,semana.inicio.real,week.peak,na.rm=T)
+      semana.fin.1<-(1:semanas)[current.season$rates<umbral.pos & punto.de.busqueda<(1:semanas)]
       if (any(semana.fin.1,na.rm=T)) semana.fin<-min(semana.fin.1,na.rm=T) else semana.fin<-NA
     }
   }else{
@@ -219,7 +246,7 @@ memsurveillance<-function(i.current,
   umbrales<-c(umbrales.1,umbrales.2,umbrales.3)[1:semanas]
   intensidades.3<-array(dim=c(semanas,3))
   intensidades<-rbind(intensidades.1,intensidades.2,intensidades.3)[1:semanas,]
-  dgraf<-as.data.frame(cbind(current.season[,2],umbrales,intensidades))
+  dgraf<-as.data.frame(cbind(current.season$rates,umbrales,intensidades))
   names(dgraf)<-c("Value","Epidemic threshold",paste("Intensidad",1:3))
   if (i.graph.file.name=="") graph.name="mem surveillance graph" else graph.name<-i.graph.file.name
   etiquetas<-c("Weekly values","Epidemic","Medium","High","Very high")
@@ -247,8 +274,10 @@ memsurveillance<-function(i.current,
   # Marcas de inicio y fin
   # if (is.na(semana.inicio.forzado) & i.start.end.marks){
   if (i.start.end.marks){
-    if (!is.na(semana.inicio)) points(x=semana.inicio,y=current.season[semana.inicio,2],pch=1,bg="#FFFFFF",col="#FF0000",lwd=7)
-    if (!is.na(semana.fin) & i.pos.epidemic) points(x=semana.fin,y=current.season[semana.fin,2],pch=1,bg="#FFFFFF",col="#40FF40",lwd=7)
+    if (!is.na(semana.inicio)) points(x=semana.inicio,y=current.season$rates[semana.inicio],pch=1,bg="#FFFFFF",col="#FF0000",lwd=7)
+    if (!is.na(semana.fin) & i.pos.epidemic){
+      if (is.na(current.season$rates[semana.fin])) points(x=semana.fin,y=0,pch=13,bg="#FFFFFF",col="#40FF40",lwd=7) else points(x=semana.fin,y=current.season$rates[semana.fin],pch=1,bg="#FFFFFF",col="#40FF40",lwd=7)
+    }
   }
   # Ejes
   axis(1,at=seq(1,semanas,1),
@@ -275,8 +304,8 @@ memsurveillance<-function(i.current,
        col="#C0C0C0")
   mtext(1,text="Week",line=2.5,cex=0.8,col="#000040")
   mtext(2,text="Weekly value",line=1.3,cex=0.8,col="#000040")
-  mtext(3,text=i.graph.subtitle,cex=0.8,col="#000040")  
-  mtext(4,text=paste("mem R library - Jos",rawToChar(as.raw(233))," E. Lozano - https://github.com/lozalojo/mem",sep=""),
+  mtext(3,text=i.graph.subtitle,cex=0.8,col="#000040")
+  mtext(4,text=paste("mem R library - Jose E. Lozano - https://github.com/lozalojo/mem",sep=""),
         line=0.75,cex=0.6,col="#404040")
   # Etiquetas de los 4 umbrales
   if (!i.no.labels){
@@ -390,11 +419,12 @@ memsurveillance<-function(i.current,
       season.scheme[semana.fin:n.season.scheme]<-3
     }
   }
-  season.scheme[is.na(current.season[,2])]<-NA
+  season.scheme[is.na(current.season$rates)]<-NA
 
   current.season$season.scheme<-season.scheme
 
-  memsurveillance.output<-list(current.season=current.season,
+  memsurveillance.output<-list(graph.name=paste(i.output,"/",graph.name,".tiff",sep=""),
+                               current.season=current.season,
                                real.start.week=semana.inicio.real,
                                forced.start.week=semana.inicio.forzado,
                                start.week=semana.inicio,

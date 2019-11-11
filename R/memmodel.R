@@ -1,42 +1,11 @@
-#' Methods for influenza modelization
+#' @title Methods for influenza modelization
 #'
+#' @description
 #' Function \code{memmodel} is used to calculate the threshold for influenza epidemic using historical
-#' records (surveillance rates).\cr
+#' records (surveillance rates).
+#'
 #' The method to calculate the threshold is described in the Moving Epidemics Method (MEM) used to
 #' monitor influenza activity in a weekly surveillance system.
-#'
-#' Input data is a data frame containing rates that represent historical influenza surveillance
-#' data. It can start and end at any given week (tipically at week 40th), and rates can be
-#' expressed as per 100,000 inhabitants (or per consultations, if population is not
-#' available) or any other scale.\cr
-#' Parameters \code{i.type}, \code{i.type.threshold} and \code{i.type.curve} defines how to
-#' calculate confidence intervals along the process.\cr
-#' \code{i.type.curve} is used for calculating the typical influenza curve,
-#' \code{i.type.threshold} is used to calculate the pre and post epidemic threshold and
-#' \code{i.type} is used for any other confidende interval used in the method.\cr
-#' All three parameters must be a number between \code{1} and \code{6}:\cr
-#' \tabular{rlll}{
-#' \tab \code{1} \tab Arithmetic mean and mean confidence interval.\cr
-#' \tab \code{2} \tab Geometric mean and mean confidence interval.\cr
-#' \tab \code{3} \tab Median and the KC Method to calculate its confidence interval.\cr
-#' \tab \code{4} \tab Median and bootstrap confidence interval.\cr
-#' \tab \code{5} \tab Arithmetic mean and point confidence interval (standard deviations).\cr
-#' \tab \code{6} \tab Geometric mean and point confidence interval (standard deviations).\cr
-#' }
-#' Option \code{4} uses two more parameters: \code{i.type.boot} indicates which bootstrap
-#' method to use. The values are the same of those of the \code{\link{boot.ci}} function.
-#' Parameter \code{i.iter.boot} indicates the number of bootstrap samples to use. See
-#' \code{\link{boot}} for more information about this topic.\cr
-#' Parameters \code{i.level}, \code{i.level.threshold} and \code{i.level.curve} indicates,
-#' respectively, the level of the confidence intervals described above.\cr
-#' The \code{i.n.max} parameter indicates how many pre epidemic values to use to calculate
-#' the threshold. A value of -1 indicates the program to use an appropiate number of points
-#' depending on the number of seasons provided as input. \code{i.tails} tells the program
-#' to use {1} or {2} tailed confidence intervals when calculating the threshold (1 is
-#' recommended).\cr
-#' Parameters \code{i.method} and \code{i.param} indicates how to find the optimal timing
-#' of the epidemics. See \code{\link{memtiming}} for details on the values this parameters
-#' can have.
 #'
 #' @name memmodel
 #'
@@ -63,17 +32,102 @@
 #' @return
 #' \code{memmodel} returns an object of class \code{mem}.
 #' An object of class \code{mem} is a list containing at least the following components:
-#'   \item{i.data }{input data}
-#'   \item{pre.post.intervals }{Pre/post confidence intervals (Threhold is the upper limit
+#' \itemize{
+#'   \item{i.data} {input data}
+#'   \item{pre.post.intervals} {Pre/post confidence intervals (Threhold is the upper limit
 #'   of the confidence interval).}
-#'   \item{ci.length }{Mean epidemic length confidence interval.}
-#'   \item{ci.percent }{Mean covered percentage confidence interval.}
-#'   \item{mean.length }{Mean length.}
-#'   \item{moving.epidemics }{Moving epidemic rates.}
-#'   \item{mean.start }{Mean epidemic start.}
-#'   \item{epi.intervals }{Epidemic levels of intensity.}
-#'   \item{typ.curve }{Typical epidemic curve.}
-#'   \item{n.max }{Effective number of pre epidemic values.}
+#'   \item{ci.length} {Mean epidemic length confidence interval.}
+#'   \item{ci.percent} {Mean covered percentage confidence interval.}
+#'   \item{mean.length} {Mean length.}
+#'   \item{moving.epidemics} {Moving epidemic rates.}
+#'   \item{mean.start} {Mean epidemic start.}
+#'   \item{epi.intervals} {Epidemic levels of intensity.}
+#'   \item{typ.curve} {Typical epidemic curve.}
+#'   \item{n.max} {Effective number of pre epidemic values.}
+#' }
+#'
+#' @details
+#' Input data is a data frame containing rates that represent historical influenza surveillance
+#' data. It can start and end at any given week (tipically at week 40th), and rates can be
+#' expressed as per 100,000 inhabitants (or per consultations, if population is not
+#' available) or any other scale.
+#'
+#' Parameters \code{i.type}, \code{i.type.threshold} and \code{i.type.curve} defines how to
+#' calculate confidence intervals along the process.
+#'
+#' \code{i.type.curve} is used for calculating the typical influenza curve,
+#' \code{i.type.threshold} is used to calculate the pre and post epidemic threshold and
+#' \code{i.type} is used for any other confidende interval used in the method.
+#'
+#' All three parameters must be a number between \code{1} and \code{6}:
+#'
+#' \itemize{
+#' \item{1} {Arithmetic mean and mean confidence interval.}
+#' \item{2} {Geometric mean and mean confidence interval.}
+#' \item{3} {Median and the KC Method to calculate its confidence interval.}
+#' \item{4} {Median and bootstrap confidence interval.}
+#' \item{5} {Arithmetic mean and point confidence interval (standard deviations).}
+#' \item{6} {Geometric mean and point confidence interval (standard deviations).}
+#' }
+#'
+#' Option \code{4} uses two more parameters: \code{i.type.boot} indicates which bootstrap
+#' method to use. The values are the same of those of the \code{\link{boot.ci}} function.
+#' Parameter \code{i.iter.boot} indicates the number of bootstrap samples to use. See
+#' \code{\link{boot}} for more information about this topic.
+#'
+#' Parameters \code{i.level}, \code{i.level.threshold} and \code{i.level.curve} indicates,
+#' respectively, the level of the confidence intervals described above.
+#'
+#' The \code{i.n.max} parameter indicates how many pre epidemic values to use to calculate
+#' the threshold. A value of -1 indicates the program to use an appropiate number of points
+#' depending on the number of seasons provided as input. \code{i.tails} tells the program
+#' to use {1} or {2} tailed confidence intervals when calculating the threshold (1 is
+#' recommended).
+#'
+#' Parameters \code{i.method} and \code{i.param} indicates how to find the optimal timing
+#' of the epidemics. See \code{\link{memtiming}} for details on the values this parameters
+#' can have.
+#'
+#' It is important to know how to arrange information in order to use with memapp. The key points are:
+#'
+#' \itemize{
+#' \item One single epidemic wave each season.
+#' \item Never delete a rate inside an epidemic.
+#' \item Accommodate week 53.
+#' \item Do not inflate missing values with zeroes.
+#' }
+#'
+#' Data must contain information from the historical series. Surveillance period can start and end at
+#' any given week (typically start at week 40th and ends at week 20th), and data can have any units and
+#' can be expressed in any scale (typically rates per 100,000 inhabitants or consultations).
+#'
+#' The table must have one row per epidemiological week and one column per surveillance season. A season
+#' is a full surveillance period from the beginning to the end, where occurs at some point one single
+#' epidemic wave on it. No epidemic wave can be spared in two consecutive seasons. If so, you have to
+#' redefine the start and end of the season defined in your dataset. If a season have two waves, it must
+#' be split in two periods and must be named accordingly with the seasons name conventions described
+#' below. Each cell contains the value for a given week in a given season.
+#'
+#' The first column should contain the names of the weeks. When the season contains two different calendar
+#' years, the week will go from 40th of the first year to 52nd, and then from 1st to 20th. When the season
+#' contains one year, the weeks will go from 1st to 52nd.
+#'
+#' Note: If there is no column with week names, the application will name the weeks numbering from 1 to
+#' the number of rows.
+#'
+#' \itemize{
+#' \item In the northern hemisphere countries, the surveillance period usually goes from
+#' week 40 to 20 of the following year (notation: season 2016/2017).
+#' \item In the southern hemisphere countries, the surveillance period usually goes from
+#' week 18 to 39 same year (notation: season 2017).
+#' }
+#'
+#' The first row must contain the names of the seasons. This application understand the naming of a
+#' season when it contains one or two four digits year separated by / and one one-digit number
+#' between parenthesis to identify the wave number. The wave number part in a name of a season is
+#' used when a single surveillance period has two epidemic waves that have to be separated in order
+#' to have reliable results. In this case, each wave is placed in different columns and named ending
+#' with (1) for the first period, (2) for the second, and so on.
 #'
 #' @examples
 #' # Castilla y Leon Influenza Rates data
@@ -87,12 +141,19 @@
 #' @author Jose E. Lozano \email{lozalojo@@gmail.com}
 #'
 #' @references
-#' Vega T., Lozano J.E. (2004) Modelling influenza epidemic - can we detect the beginning
-#' and predict the intensity and duration? International Congress Series 1263 (2004)
-#' 281-283.\cr
-#' Vega T., Lozano J.E. (2012) Influenza surveillance in Europe: establishing epidemic
-#' thresholds by the Moving Epidemic Method. Influenza and Other Respiratory Viruses,
-#' DOI:10.1111/j.1750-2659.2012.00422.x.
+#' Vega T, Lozano JE, Ortiz de Lejarazu R, Gutierrez Perez M. Modelling influenza epidemic - can we
+#' detect the beginning and predict the intensity and duration? Int Congr Ser. 2004 Jun;1263:281-3.
+#'
+#' Vega T, Lozano JE, Meerhoff T, Snacken R, Mott J, Ortiz de Lejarazu R, et al. Influenza surveillance
+#' in Europe: establishing epidemic thresholds by the moving epidemic method. Influenza Other Respir
+#' Viruses. 2013 Jul;7(4):546-58. DOI:10.1111/j.1750-2659.2012.00422.x.
+#'
+#' Vega T, Lozano JE, Meerhoff T, Snacken R, Beaute J, Jorgensen P, et al. Influenza surveillance in
+#' Europe: comparing intensity levels calculated using the moving epidemic method. Influenza Other
+#' Respir Viruses. 2015 Sep;9(5):234-46. DOI:10.1111/irv.12330.
+#'
+#' Lozano JE. lozalojo/mem: Second release of the MEM R library. Zenodo [Internet]. [cited 2017 Feb 1];
+#' Available from: \url{https://zenodo.org/record/165983}. DOI:10.5281/zenodo.165983
 #'
 #' @keywords influenza
 #'
@@ -111,7 +172,7 @@ memmodel<-function(i.data,
                     i.tails.intensity=1,
                     i.type.curve=2,
                     i.level.curve=0.95,
-                    i.type.other=2,
+                    i.type.other=3,
                     i.level.other=0.95,
                     i.method=2,
                     i.param=2.8,
@@ -134,13 +195,17 @@ memmodel<-function(i.data,
 
   # Calcular el optimo
 
-  if (i.n.max==-1){
+  if (is.na(i.n.max)){
     n.max<-max(1,round(30/anios,0))
-    #if (anios>=10) n.max=3 else n.max=5
-  }else if (i.n.max==0){
-    n.max=semanas
   }else{
-    n.max=i.n.max
+    if (i.n.max==-1){
+      n.max<-max(1,round(30/anios,0))
+      #if (anios>=10) n.max=3 else n.max=5
+    }else if (i.n.max==0){
+      n.max=semanas
+    }else{
+      n.max=i.n.max
+    }
   }
 
   optimo<-apply(datos,2,memtiming,i.n.values=n.max,i.method=i.method,i.param=i.param)
@@ -329,20 +394,8 @@ memmodel<-function(i.data,
 
   pre.post.intervalos<-rbind(pre.i,post.i)
 
-  ## Ademas, añadimos las estimaciones de las lineas basicas antes y despues
-
-  #lineas.basicas<-array(dim=c(semanas,3))
-  #
-  #for (i in 1:(inicio.medio-1)){
-  #	lineas.basicas[i,]<-pre.post.intervalos[1,1:3]
-  #}
-  #
-  #for (i in ((inicio.medio+duracion.media):semanas)){
-  #	lineas.basicas[i,]<-pre.post.intervalos[2,1:3]
-  #}
-
-  ## Curva tipica con base en el umbral pre-epidémico
-  ## Sacar la semana típica de início, fim y duración con base en los umbrales pre y post epidemico
+  # Curva tipica con base en el umbral pre-epidemico
+  # Sacar la semana tipica de inicio, fim y duracion con base en los umbrales pre y post epidemico
 
   inicio.umbral<- apply(datos>pre.i[3], 2, primer.verdadero)
   fin.umbral <- c()
@@ -475,6 +528,8 @@ memmodel<-function(i.data,
     start.week=semana.inicio,
     epi.data=epi.datos,
     epi.data.nona=epi.d,
+    epi.data.full=epi.datos.2,
+    epi.data.nona.full=epi.d.2,
     optimum=optimo,
     real.length.data=datos.duracion.real,
     seasons.data=gripe,
@@ -537,8 +592,9 @@ summary.mem<-function(object, ...){
   print(object$call)
   cat("\nParameters:\n")
   cat("\t- General:\n")
-  cat("\t\t+ Number of seasons restriction: ", if (object$param.seasons==-1) "Unrestricted (maximum)" else paste("Restricted to ",object$param.seasons,sep=""),"\n")
+  cat("\t\t+ Number of seasons restriction: ", if (object$param.seasons==-1 | is.na(object$param.seasons)) "Unrestricted (maximum)" else paste("Restricted to ",object$param.seasons,sep=""),"\n")
   cat("\t\t+ Number of seasons used: ", object$n.seasons,"\n")
+  cat("\t\t+ Seasons used: ", paste(names(object$data),collapse=","),"\n")
   cat("\t\t+ Number of weeks: ", object$n.weeks,"\n")
   cat("\t- Confidence intervals:\n")
   cat("\t\t+ Epidemic threshold: ", output.ci(object$param.type.threshold,object$param.level.threshold,object$param.tails.threshold),"\n")
@@ -549,17 +605,17 @@ summary.mem<-function(object, ...){
   cat("\t\t+ Method: ", object$param.method,"\n")
   cat("\t\t+ Parameter: ", object$param.param,"\n")
   cat("\t- Epidemic threshold calculation:\n")
-  cat("\t\t+ Pre-epidemic values: ", if (object$param.n.max==-1) paste("Optimized: ",object$n.max,sep="") else object$n.max,"\n")
+  cat("\t\t+ Pre-epidemic values: ", if (is.na(object$param.n.max)) paste("Optimized: ",object$n.max,sep="") else {if (object$param.n.max==-1) paste("Optimized: ",object$n.max,sep="") else object$n.max},"\n")
   cat("\t\t+ Tails of CI: ", object$param.tails.threshold,"\n")
   cat("\t- Intensity thresholds calculation:\n")
-  cat("\t\t+ Number of values: ", if (object$param.n.max==-1) paste("Optimized: ",object$n.max,sep="") else object$n.max,"\n")
+  cat("\t\t+ Number of values: ", if (is.na(object$param.n.max)) paste("Optimized: ",object$n.max,sep="") else {if (object$param.n.max==-1) paste("Optimized: ",object$n.max,sep="") else object$n.max},"\n")
   cat("\t\t+ Tails of CI: ", object$param.tails.intensity,"\n")
   cat("\t\t+ Levels of CI: ", paste(c("Medium","High","Very high"),": ",round(object$epi.intervals[,1]*100,1),"%",sep=""),"\n")
   cat("\t- Bootstrap (if used):\n")
   cat("\t\t+ Technique: ", if (is.na(object$param.type.boot)) "-" else object$param.type.boot,"\n")
   cat("\t\t+ Bootstrap samples: ", if (is.na(object$param.iter.boot)) "-" else object$param.iter.boot,"\n")
   cat("\nEpidemic description:\n")
-  cat("\t- Typical influenza season lasts ",round(object$ci.length[1,2],2)," weeks. CL ",100*object$param.level,"% of\t[",round(object$ci.length[1,1],2),",",round(object$ci.length[1,3],2),"]\n")
+  cat("\t- Typical influenza season lasts ",round(object$ci.length[1,2],2)," weeks. ",100*object$param.level.other,"%CI \t[",round(object$ci.length[1,1],2),",",round(object$ci.length[1,3],2),"]\n")
   cat("\t- This optimal ",object$mean.length," weeks influenza season includes the",round(object$ci.percent[2],2),"% of the total sum of rates\n\n")
   cat("\nEpidemic threshold:\n")
   print(threshold)
@@ -575,6 +631,7 @@ plot.mem<-function(x,...){
   # Graph 1
   semanas<-dim(x$data)[1]
   anios<-dim(x$data)[2]
+  names.seasons<-sub("^.*\\(([^\\)]*)\\)$","\\1",names(x$data),perl=T)
   datos.graf<-x$moving.epidemics
   colnames(datos.graf)<-names(x$data)
   #lab.graf<-(1:semanas)+x$mean.start[2]-x$mean.start[1]
@@ -616,7 +673,7 @@ plot.mem<-function(x,...){
   mtext(1,text="Week",line=2,cex=0.8,col="#000040")
   axis(2,at=otick$tickmarks,lwd=1,cex.axis=0.6,col.axis="#404040",col="#C0C0C0")
   mtext(2,text="Weekly rate",line=1.3,cex=0.8,col="#000040")
-  mtext(4,text=paste("mem R library - Jos",rawToChar(as.raw(233))," E. Lozano - https://github.com/lozalojo/mem",sep=""),
+  mtext(4,text=paste("mem R library - Jose E. Lozano - https://github.com/lozalojo/mem",sep=""),
         line=0.75,cex=0.6,col="#404040")
   i.temporada<-x$ci.start[1,2]
   f.temporada<-x$ci.start[1,2]+x$mean.length-1
@@ -628,7 +685,7 @@ plot.mem<-function(x,...){
   ya<-otick$range[2]
   if ((i.temporada-1)<=(semanas-f.temporada)) xa<-f.temporada+1 else xa<-1
   legend(x=xa,y=ya,inset=c(0,0),xjust=0,seg.len=1,
-           legend=names(x$data),
+           legend=names.seasons,
            bty="n",
            lty=tipos,
            lwd=anchos,
@@ -677,7 +734,7 @@ plot.mem<-function(x,...){
   # mtext(1,text="Week",line=2,cex=0.8,col="#000040")
   # axis(2,at=otick$tickmarks,lwd=1,cex.axis=0.6,col.axis="#404040",col="#C0C0C0")
   # mtext(2,text="Weekly rate",line=1.3,cex=0.8,col="#000040")
-  # mtext(4,text=paste("mem R library - Jos",rawToChar(as.raw(233))," E. Lozano - https://github.com/lozalojo/mem",sep=""),
+  # mtext(4,text=paste("mem R library - Jose E. Lozano - https://github.com/lozalojo/mem",sep=""),
   #       line=0.75,cex=0.6,col="#404040")
   # xa<-c(i.temporada/2,1+rep(f.temporada,n.niveles))
   # ya<-c(lineas.basicas[1,3],limites.niveles)

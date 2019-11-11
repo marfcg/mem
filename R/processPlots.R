@@ -1,8 +1,7 @@
-#' Full process plots for mem
+#' @title Full process plots for mem
 #'
+#' @description
 #' Function \code{processPlots} creates graphs of all mem process
-#'
-#' To be written
 #'
 #' @name processPlots
 #'
@@ -12,6 +11,11 @@
 #'
 #' @return
 #' \code{processPlots} prints a set of graphs.
+#'
+#' @details
+#' Create plots related to the process of calculating MEM indicators to an
+#' output directory, showing the MAP curves and the slope of the MAP curve
+#' and how the timing is calculated.
 #'
 #' @examples
 #' # Castilla y Leon Influenza Rates data
@@ -23,12 +27,19 @@
 #' @author Jose E. Lozano \email{lozalojo@@gmail.com}
 #'
 #' @references
-#' Vega T., Lozano J.E. (2004) Modelling influenza epidemic - can we detect the beginning
-#' and predict the intensity and duration? International Congress Series 1263 (2004)
-#' 281-283.\cr
-#' Vega T., Lozano J.E. (2012) Influenza surveillance in Europe: establishing epidemic
-#' thresholds by the Moving Epidemic Method. Influenza and Other Respiratory Viruses,
-#' DOI:10.1111/j.1750-2659.2012.00422.x.
+#' Vega T, Lozano JE, Ortiz de Lejarazu R, Gutierrez Perez M. Modelling influenza epidemic - can we
+#' detect the beginning and predict the intensity and duration? Int Congr Ser. 2004 Jun;1263:281-3.
+#'
+#' Vega T, Lozano JE, Meerhoff T, Snacken R, Mott J, Ortiz de Lejarazu R, et al. Influenza surveillance
+#' in Europe: establishing epidemic thresholds by the moving epidemic method. Influenza Other Respir
+#' Viruses. 2013 Jul;7(4):546-58. DOI:10.1111/j.1750-2659.2012.00422.x.
+#'
+#' Vega T, Lozano JE, Meerhoff T, Snacken R, Beaute J, Jorgensen P, et al. Influenza surveillance in
+#' Europe: comparing intensity levels calculated using the moving epidemic method. Influenza Other
+#' Respir Viruses. 2015 Sep;9(5):234-46. DOI:10.1111/irv.12330.
+#'
+#' Lozano JE. lozalojo/mem: Second release of the MEM R library. Zenodo [Internet]. [cited 2017 Feb 1];
+#' Available from: \url{https://zenodo.org/record/165983}. DOI:10.5281/zenodo.165983
 #'
 #' @keywords influenza
 #'
@@ -38,6 +49,8 @@
 #' @importFrom graphics polygon
 #' @importFrom utils write.table
 processPlots<-function(i.flu,i.output=".",i.prefix=""){
+
+  i.flu$param.data<-i.flu$param.data[names(i.flu$param.data) %in% names(i.flu$data)]
 
   semanas<-dim(i.flu$data)[1]
   anios<-dim(i.flu$data)[2]

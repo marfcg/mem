@@ -4,15 +4,15 @@
 \alias{transformdata}
 \title{Data transformation}
 \usage{
-transformdata(i.data, i.week.first = 40, i.week.last = 20,
+transformdata(i.data, i.range.x = NA, i.name = "rates",
   i.max.na.per = 100)
 }
 \arguments{
 \item{i.data}{Data frame of input data.}
 
-\item{i.week.first}{First surveillance week.}
+\item{i.range.x}{First and last surveillance week.}
 
-\item{i.week.last}{Last surveillance week.}
+\item{i.name}{Name of the column to transform.}
 
 \item{i.max.na.per}{maximum percentage of na's in a season allowable, otherwise, the season is removed}
 }
@@ -25,29 +25,37 @@ Function \code{transformdata} transforms data from year,week,rate to week,rate1,
 suitable to use with mem.
 }
 \details{
-Yet to be written
+Transform data from format year, week, rate to a format suitable to be used
+with \link{mem}, that is, one column with each season in the dataset and the
+week names as rownames of the data.frame.
 }
 \examples{
 # Castilla y Leon Influenza Rates data
 data(flucylraw)
 # Transform data
-newdata<-transformdata(flucylraw)$tdata
+newdata<-transformdata(flucylraw, i.range.x=c(40,20))$data
 epi<-memmodel(newdata)
 print(epi)
 summary(epi)
 plot(epi)
 
 }
+\references{
+Vega T, Lozano JE, Ortiz de Lejarazu R, Gutierrez Perez M. Modelling influenza epidemic - can we
+detect the beginning and predict the intensity and duration? Int Congr Ser. 2004 Jun;1263:281-3.
+
+Vega T, Lozano JE, Meerhoff T, Snacken R, Mott J, Ortiz de Lejarazu R, et al. Influenza surveillance
+in Europe: establishing epidemic thresholds by the moving epidemic method. Influenza Other Respir
+Viruses. 2013 Jul;7(4):546-58. DOI:10.1111/j.1750-2659.2012.00422.x.
+
+Vega T, Lozano JE, Meerhoff T, Snacken R, Beaute J, Jorgensen P, et al. Influenza surveillance in
+Europe: comparing intensity levels calculated using the moving epidemic method. Influenza Other
+Respir Viruses. 2015 Sep;9(5):234-46. DOI:10.1111/irv.12330.
+
+Lozano JE. lozalojo/mem: Second release of the MEM R library. Zenodo [Internet]. [cited 2017 Feb 1];
+Available from: \url{https://zenodo.org/record/165983}. DOI:10.5281/zenodo.165983
+}
 \author{
 Jose E. Lozano \email{lozalojo@gmail.com}
 }
-\references{
-Vega T., Lozano J.E. (2004) Modelling influenza epidemic - can we detect the beginning
-and predict the intensity and duration? International Congress Series 1263 (2004)
-281-283.\cr
-Vega T., Lozano J.E. (2012) Influenza surveillance in Europe: establishing epidemic
-thresholds by the Moving Epidemic Method. Influenza and Other Respiratory Viruses,
-DOI:10.1111/j.1750-2659.2012.00422.x.
-}
 \keyword{influenza}
-

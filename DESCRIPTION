@@ -1,21 +1,23 @@
 Package: mem
 Type: Package
-Title: Moving Epidemic Method R Package
-Version: 2.1
-Date: 2016-09-13
-Authors@R: c(person("Lozano", "Jose E.", email = "lozalojo@gmail.com", role = c("aut", "cre")),
+Title: The Moving Epidemic Method R Package
+Version: 2.20.20191111
+Date: 2019-11-11
+Authors@R: c(person(given = "Jose E.", family = "Lozano", email = "lozalojo@gmail.com", role = c("aut", "cre")),
             person("Gomes", "Marcelo F. C", email = "marfcg@gmail.com", role = c("ctb")))
 Depends:
-    R (>= 3.3.0),
+    R (>= 3.4.0)
+Imports:
     sm,
     boot,
-    grDevices,
-    graphics,
-    stats,
-    sqldf,
     reshape2,
-    RColorBrewer
-Description: Modelization of influenza epidemics in order to monitor future
-    activity.
+    RColorBrewer,
+    mixtools,
+    stringr
+Suggests:
+    magick
+Description: Tools to model influenza epidemics and to monitor influenza surveillance.
 License: GPL (>= 2)
-RoxygenNote: 5.0.1
+URL: https://github.com/lozalojo/mem
+BugReports: https://github.com/lozalojo/mem/issues
+RoxygenNote: 6.1.1

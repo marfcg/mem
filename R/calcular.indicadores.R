@@ -2,6 +2,7 @@
 #'
 #' @keywords internal
 #' @importFrom graphics rect
+#' @importFrom grDevices png
 calcular.indicadores<-function(i.current,
                                i.umbral.pre,
                                i.umbral.pos=NA,
@@ -17,7 +18,7 @@ calcular.indicadores<-function(i.current,
 
   #if (is.na(i.umbral.pre)) if (!is.na(i.umbral.pos)) i.umbral.pre<-i.umbral.pos else i.umbral.pre<-Inf
   if (is.na(i.umbral.pre)) i.umbral.pre<-Inf
-  
+
   semanas<-dim(i.current)[1]
   nombre.semana<-rownames(i.current)
   numero.semana<-1:semanas
@@ -121,10 +122,14 @@ calcular.indicadores<-function(i.current,
   pos.likehood.ratio[is.nan(pos.likehood.ratio)]<-NA
   neg.likehood.ratio<-(1-sensibilidad)/especificidad
   neg.likehood.ratio[is.nan(neg.likehood.ratio)]<-NA
-  
+
   percent.agreement<-(true.pos+true.neg)/(true.pos+true.neg+false.pos+false.neg)
   percent.agreement[is.nan(percent.agreement)]<-NA
-  
+
+  #Matthews correlation coefficient
+  mcc<-(true.pos*true.neg-false.pos*false.neg)/sqrt((true.pos+false.pos)*(true.pos+false.neg)*(true.neg+false.pos)*(true.neg+false.neg))
+  mcc[is.nan(mcc)]<-NA
+
   if (true.pos.t+false.neg.t>0) sensibilidad.t<-true.pos.t/(true.pos.t+false.neg.t) else sensibilidad.t<-NA
   if (true.neg.t+false.pos.t>0) especificidad.t<-true.neg.t/(true.neg.t+false.pos.t) else especificidad.t<-NA
   if (true.pos.t+false.pos.t>0) ppv.t<-true.pos.t/(true.pos.t+false.pos.t) else ppv.t<-NA
@@ -134,23 +139,27 @@ calcular.indicadores<-function(i.current,
   neg.likehood.ratio.t<-NA
   if (!is.na(especificidad.t)) if (especificidad.t>0) neg.likehood.ratio.t<-(1-sensibilidad.t)/especificidad.t else neg.likehood.ratio.t<-NA
   if (true.pos.t+true.neg.t+false.pos.t+false.neg.t>0) percent.agreement.t<-(true.pos.t+true.neg.t)/(true.pos.t+true.neg.t+false.pos.t+false.neg.t) else percent.agreement.t<-NA
-  
+
+  if ((true.pos.t+false.pos.t)>0 & (true.pos.t+false.neg.t)>0 & (true.neg.t+false.pos.t)>0 & (true.neg.t+false.neg.t)>0) mcc.t<-(true.pos.t*true.neg.t-false.pos.t*false.neg.t)/(sqrt(true.pos.t+false.pos.t)*sqrt(true.pos.t+false.neg.t)*sqrt(true.neg.t+false.pos.t)*sqrt(true.neg.t+false.neg.t)) else mcc.t<-NA
+
   semanas.not.na<-sum(!is.na(i.current))
 
   indicadores.t<-as.matrix(c(semanas,semanas.not.na,true.pos.t,false.pos.t,true.neg.t,
                              false.neg.t,sensibilidad.t,especificidad.t,ppv.t,npv.t,
-                             pos.likehood.ratio.t,neg.likehood.ratio.t,percent.agreement.t))
+                             pos.likehood.ratio.t,neg.likehood.ratio.t,percent.agreement.t,
+                             mcc.t))
   rownames(indicadores.t)<-c("Weeks","Non-missing weeks","True positives","False positives",
                              "True negatives","False negatives","Sensitivity","Specificity",
                              "Positive predictive value","Negative predictive value",
-                             "Positive likehood ratio","Negative likehood ratio","Percent agreement")
+                             "Positive likehood ratio","Negative likehood ratio",
+                             "Percent agreement","Matthews correlation coefficient")
   colnames(indicadores.t)<-"values"
 
   indicadores<-data.frame(parametro=i.valores.parametro.deteccion,semanas=semanas,semanas.not.na=semanas.not.na,
                           true.pos=true.pos,false.pos=false.pos,true.neg=true.neg,false.neg=false.neg,
                           sensibilidad=sensibilidad,especificidad=especificidad,ppv=ppv,npv=npv,
                           pos.likehood.ratio=pos.likehood.ratio,neg.likehood.ratio=neg.likehood.ratio,
-                          percent.agreement=percent.agreement)
+                          percent.agreement=percent.agreement,mcc=mcc)
 
   if (i.graph){
 
@@ -208,8 +217,9 @@ calcular.indicadores<-function(i.current,
     for (i in 1:n.parametros){
       if (i.graph.name=="") graph.name<-paste("surveillance graph (",format(round(i.valores.parametro.deteccion[i],1),digits=3,nsmall=1),")",sep="") else graph.name<-paste(i.graph.name," (",format(round(i.valores.parametro.deteccion[i],1),digits=3,nsmall=1),")",sep="")
 
-      tiff(filename=paste(i.output,"/",graph.name,".tiff",sep=""),width=8,height=6,units="in",pointsize="12",
-           compression="lzw",bg="white",res=300,antialias="none")
+      png(filename=paste(i.output,"/", graph.name, ".png", sep=""),
+          width=8, height=6, units="in", pointsize="12",
+          bg="white", res=300, antialias="none")
       opar<-par(mar=c(4,4,1,8)+0.1,xpd=TRUE)
       #,mgp=c(3,0.5,0),xpd=T)
       # Grafico principal
@@ -223,18 +233,28 @@ calcular.indicadores<-function(i.current,
       #points(1:semanas,dgraf[,1],pch=19,type="p",col="#000000",cex=1)
       # pre
       puntos.1<-i.current[,1]
-      if (!is.na(optimos[i,1])) puntos.1[optimos[i,1]:semanas]<-NA
+      puntos.1[!(resultado.1[i,]==1)]<-NA
+      # if (!is.na(optimos[i,1])) puntos.1[optimos[i,1]:semanas]<-NA
       points(puntos.1,pch=19,type="p",col=colores.epi[1],cex=1.5)
       # epi
       puntos.2<-i.current[,1]
-      if (!is.na(optimos[i,1]) & optimos[i,1]>1) puntos.2[1:(optimos[i,1]-1)]<-NA else puntos.2[1:semanas]<-NA
-      if (!is.na(optimos[i,2])) puntos.2[optimos[i,2]:semanas]<-NA
+      puntos.2[!(resultado.1[i,]==2)]<-NA
+      # if (is.na(optimos[i,1])){
+      #   puntos.2[1:semanas]<-NA
+      # }else{
+      #   if (optimos[i,1]>1) puntos.2[1:(optimos[i,1]-1)]<-NA
+      #   if (!is.na(optimos[i,2])) puntos.2[optimos[i,2]:semanas]<-NA
+      # }
       points(puntos.2,pch=19,type="p",col=colores.epi[2],cex=1.5)
       # post
       puntos.3<-i.current[,1]
-      if (!is.na(optimos[i,2]) & optimos[i,2]>1) puntos.3[1:(optimos[i,2]-1)]<-NA else puntos.3[1:semanas]<-NA
+      puntos.3[!(resultado.1[i,]==3)]<-NA
+      # if (is.na(optimos[i,1])){
+      #   puntos.3[1:semanas]<-NA
+      # }else{
+      #   if (is.na(optimos[i,2])) puntos.3[1:semanas]<-NA else puntos.3[1:(optimos[i,2]-1)]<-NA
+      # }
       points(puntos.3,pch=19,type="p",col=colores.epi[3],cex=1.5)
-
       # Ejes
       axis(2,at=range.y.seq,lwd=1,cex.axis=0.6,col.axis="#404040",col="#C0C0C0",mgp=c(3, 0.5, 0))
       mtext(2,text="Weekly rate",line=2,cex=0.8,col="#000040")
@@ -245,7 +265,7 @@ calcular.indicadores<-function(i.current,
       axis(1,at=seq(2,semanas,2),tick=F,mgp=c(3, 0.5, 0),
            labels=nombre.semana[seq(2,semanas,2)],cex.axis=0.6,line=0.60,col.axis="#404040",col="#C0C0C0")
       mtext(1,text="Week",line=2.5,cex=0.8,col="#000040")
-      mtext(4,text=paste("mem R library - Jos",rawToChar(as.raw(233))," E. Lozano - https://github.com/lozalojo/mem",sep=""),
+      mtext(4,text=paste("mem R library - Jose E. Lozano - https://github.com/lozalojo/mem",sep=""),
             line=7,cex=0.6,col="#404040")
       # Etiquetas de los 4 umbrales
 
