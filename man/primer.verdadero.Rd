@@ -10,4 +10,3 @@ primer.verdadero(x)
 find first TRUE value function, returning NA if not present
 }
 \keyword{internal}
-

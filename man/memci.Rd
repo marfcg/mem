@@ -39,9 +39,6 @@ Parameter \code{i.iter.boot} indicates the number of bootstrap samples to use. S
 Parameters \code{i.level}, \code{i.level.threshold} and \code{i.level.curve} indicates,
 respectively, the level of the confidence intervals described above.\cr
 }
-\author{
-Jose E. Lozano \email{lozalojo@gmail.com}
-}
 \references{
 Vega T., Lozano J.E. (2004) Modelling influenza epidemic - can we detect the beginning
 and predict the intensity and duration? International Congress Series 1263 (2004)
@@ -50,4 +47,6 @@ Vega T., Lozano J.E. (2012) Influenza surveillance in Europe: establishing epide
 thresholds by the Moving Epidemic Method. Influenza and Other Respiratory Viruses,
 DOI:10.1111/j.1750-2659.2012.00422.x.
 }
-
+\author{
+Jose E. Lozano \email{lozalojo@gmail.com}
+}
