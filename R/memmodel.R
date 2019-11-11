@@ -394,20 +394,8 @@ memmodel<-function(i.data,
 
   pre.post.intervalos<-rbind(pre.i,post.i)
 
-  ## Ademas, añadimos las estimaciones de las lineas basicas antes y despues
-
-  #lineas.basicas<-array(dim=c(semanas,3))
-  #
-  #for (i in 1:(inicio.medio-1)){
-  #	lineas.basicas[i,]<-pre.post.intervalos[1,1:3]
-  #}
-  #
-  #for (i in ((inicio.medio+duracion.media):semanas)){
-  #	lineas.basicas[i,]<-pre.post.intervalos[2,1:3]
-  #}
-
-  ## Curva tipica con base en el umbral pre-epidémico
-  ## Sacar la semana típica de início, fim y duración con base en los umbrales pre y post epidemico
+  # Curva tipica con base en el umbral pre-epidemico
+  # Sacar la semana tipica de inicio, fim y duracion con base en los umbrales pre y post epidemico
 
   inicio.umbral<- apply(datos>pre.i[3], 2, primer.verdadero)
   fin.umbral <- c()
